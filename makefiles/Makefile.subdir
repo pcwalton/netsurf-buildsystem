@@ -57,7 +57,7 @@ ifeq ($(MAKECMDGOALS),test)
     test_$(d): $(d) $(addprefix $(BUILDDIR)/, \
 			$(subst /,_,$(addprefix $(d), \
 			$(basename $(TEST_SRCS_$(d))))))
-	$(Q)$(TESTRUNNER) $(BUILDDIR) $(CURDIR)/$< $(EXEEXT)
+	$(Q)$(TESTRUNNER) $(BUILDDIR) $(CURDIR)/$< $(subst /,_,$<) $(EXEEXT)
   endif
 endif
 
