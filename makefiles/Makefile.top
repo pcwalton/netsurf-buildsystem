@@ -310,7 +310,7 @@ ifeq ($(CC_CAN_BUILD_AND_DEP),yes)
   define build_c
     $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
-	$$(Q)$$(CC) -MMD -MP $($3) -o $$@ -c $1
+	$$(Q)$$(CC) -MMD -MP $$($3) -o $$@ -c $1
 
   endef
 else
@@ -319,8 +319,8 @@ else
   define dep_c
     $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) "     DEP: $1"
-	$$(Q)$$(RM)$($@)
-	$$(Q)$$(CC) $($3) -MM $1 > $$@
+	$$(Q)$$(RM) $$(RMFLAGS) $($@)
+	$$(Q)$$(CC) $$($3) -MM $1 > $$@
 	$$(Q)$$(SED) $$(SEDFLAGS) -i 's,^.*:,$$@ $$(@:.d=.o):,' $$@
 
     DEPFILES += $$(BUILDDIR)/$2
@@ -330,7 +330,7 @@ else
   define build_c
     $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
-	$$(Q)$$(CC) $($3) -o $$@ -c $1
+	$$(Q)$$(CC) $$($3) -o $$@ -c $1
 
   endef
 endif
@@ -345,18 +345,18 @@ $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
 
 # Similarly for test sources
 ifeq ($(MAKECMDGOALS),test)
-  TESTCFLAGS := $(TESTCFLAGS) $(CFLAGS)
-  TESTLDFLAGS := $(TESTLDFLAGS) $(LDFLAGS)
-
   ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
     TESTLIB := $(OUTPUT)
-    TESTLDFLAGS := $(TESTLDFLAGS) -L$(BUILDDIR)/ -l$(COMPONENT)
+    TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)
   endif
+
+  TESTCFLAGS += $(CFLAGS)
+  TESTLDFLAGS += $(LDFLAGS)
 
   define link_test
     $2: $($3) $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) "    LINK: $2"
-	$$(Q)$$(CC) -o $$@ $1 $($4)
+	$$(Q)$$(CC) -o $$@ $1 $$($4)
 
   endef
 

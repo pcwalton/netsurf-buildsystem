@@ -38,9 +38,6 @@ sp             := $(sp).x
 dirstack_$(sp) := $(d)
 d              := $(DIR)
 
-# Manipulate include paths
-CFLAGS := $(CFLAGS) -I$(d)
-
 # Sources
 SRCS_$(d) := $(DIR_SOURCES)
 TEST_SRCS_$(d) := $(DIR_TEST_SOURCES)
