@@ -14,8 +14,8 @@
 #
 # Optional inputs:
 #
-# BUILDDIR		Directory to build into
-# 				(defaults to build-$(HOST)-$(TARGET)-$(BUILD))
+# BUILDDIR		Directory to build into (defaults to 
+# 			build-$(HOST)-$(TARGET)-$(BUILD)-$(COMPONENT_TYPE))
 # CC_CAN_BUILD_AND_DEP	Flag whether $(CC) is capable of calculating dependency
 # 			information at the same time as compiling sources.
 # 			Set to "yes" if it can.
@@ -113,7 +113,7 @@ VQ ?= @
 ##############################################################################
 
 # Build directory
-BUILDDIR ?= build-$(HOST)-$(TARGET)-$(BUILD)
+BUILDDIR ?= build-$(HOST)-$(TARGET)-$(BUILD)-$(COMPONENT_TYPE)
 
 # Build tree subdirs
 COVERAGEDIR := $(BUILDDIR)/coverage
@@ -288,7 +288,7 @@ ifeq ($(COMPONENT_TYPE),lib-static)
 	$(Q)$(AR) $(ARFLAGS) $@ $(OBJECTS)
 else
 	$(VQ)$(ECHO) $(ECHOFLAGS) "    LINK: $@"
-	$(Q)$(LD) -o $@ $(OBJECTS) $(LDFLAGS)
+	$(Q)$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
 endif
 
 ###############################################################################
