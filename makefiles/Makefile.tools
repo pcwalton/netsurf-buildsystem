@@ -149,7 +149,7 @@ endif
 ifeq ($(COMPONENT_TYPE),lib-shared)
   # Default CFLAGS/LDFLAGS for shared libraries
   SHAREDCFLAGS ?= -fPIC -DPIC
-  SHAREDLDFLAGS ?= -Wl,-shared
+  SHAREDLDFLAGS ?= -shared
 
   CFLAGS := $(CFLAGS) $(SHAREDCFLAGS)
   LDFLAGS := $(LDFLAGS) $(SHAREDLDFLAGS)
