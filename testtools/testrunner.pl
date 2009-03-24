@@ -2,7 +2,7 @@
 #
 # Testcase runner for libhubbub
 #
-# Usage: testrunner <directory> [<executable extension>]
+# Usage: testrunner <builddir> <testdir> <prefix> [<executable extension>]
 #
 # Operates upon INDEX files described in the README.
 # Locates and executes testcases, feeding data files to programs 
@@ -18,20 +18,22 @@ use IO::Select;
 use IPC::Open3;
 use Symbol;
 
-if (@ARGV < 1) {
-	print "Usage: testrunner.pl <directory> [<exeext>]\n";
+if (@ARGV < 3) {
+	print "Usage: testrunner.pl <builddir> <testdir> <prefix> [<exeext>]\n";
 	exit;
 }
 
-# Get directory
+# Get directories
+my $builddir = shift @ARGV;
 my $directory = shift @ARGV;
+my $prefix = shift @ARGV;
 
 # Get EXE extension (if any)
 my $exeext = "";
 $exeext = shift @ARGV if (@ARGV > 0);
 
 # Open log file and /dev/null
-open(LOG, ">$directory/log") or die "Failed opening test log";
+open(LOG, ">$builddir/testlog") or die "Failed opening test log";
 open(NULL, "+<", File::Spec->devnull) or die "Failed opening /dev/null";
 
 # Open testcase index
@@ -49,8 +51,8 @@ while (my $line = <TINDEX>) {
 	$desc =~ s/^\s+|\s+$//g;
 	$data =~ s/^\s+|\s+$//g if ($data);
 
-	# Append EXE extension to binary name
-	$test = $test . $exeext;
+	# Append prefix & EXE extension to binary name
+	$test = $prefix . $test . $exeext;
 
 	print "Test: $desc\n";
 
@@ -72,7 +74,7 @@ while (my $line = <TINDEX>) {
 			$dtest =~ s/^\s+|\s+$//g;
 			$ddesc =~ s/^\s+|\s+$//g;
 
-			print LOG "Running $directory/$test " .
+			print LOG "Running $builddir/$test " .
 					"$directory/data/Aliases " .
 					"$directory/data/$data/$dtest\n";
 
@@ -83,14 +85,14 @@ while (my $line = <TINDEX>) {
 			print $msg;
 
 			# Run testcase
-			run_test("$directory/$test", "$directory/data/Aliases", 
+			run_test("$builddir/$test", "$directory/data/Aliases", 
 					"$directory/data/$data/$dtest");
                 }
 
 		close(DINDEX);
 	} else {
 		# Testcase has no external data files
-		print LOG "Running $directory/$test $directory/data/Aliases\n";
+		print LOG "Running $builddir/$test $directory/data/Aliases\n";
 
 		# Make message fit on an 80 column terminal
 		my $msg = "    ==> $test";
@@ -99,7 +101,7 @@ while (my $line = <TINDEX>) {
 		print $msg;
 
 		# Run testcase
-		run_test("$directory/$test", "$directory/data/Aliases");
+		run_test("$builddir/$test", "$directory/data/Aliases");
 	}
 
 	print "\n";
