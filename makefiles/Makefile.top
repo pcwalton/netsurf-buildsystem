@@ -4,7 +4,7 @@
 #
 # BUILD			Type of build to perform:
 # 				release		-	Release build
-# 				debug		-	Debug build (default)
+# 				debug		-	Debug build
 # COMPONENT		Name of the component (sans leading "lib" iff a library)
 # COMPONENT_TYPE	Type of component:
 # 				binary		-	Executable binary
@@ -68,38 +68,10 @@ ifeq ($(TARGET),)
   $(error TARGET not defined)
 endif
 
-# Default build type
+# Build type, too
 ifeq ($(BUILD),)
-  BUILD := debug
+  $(error BUILD not defined)
 endif
-
-##############################################################################
-# Tool defaults
-##############################################################################
-
-ifeq ($(BUILD),release)
-  CFLAGS ?= -O2
-else
-  CFLAGS ?= -g -O0
-  LDFLAGS ?= -g
-endif
-
-ECHO ?= echo
-
-GENHTML ?= genhtml
-
-INSTALL ?= install
-
-LCOV ?= lcov
-
-MKDIR ?= mkdir
-MKDIRFLAGS ?= -p
-
-PKGCONFIG ?= pkg-config
-
-SED ?= sed
-
-TOUCH ?= touch
 
 ##############################################################################
 # Makefile variables

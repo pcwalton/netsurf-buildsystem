@@ -1,0 +1,166 @@
+# Tools Makefile fragment
+#
+# Expected inputs:
+#
+# COMPONENT_TYPE	Type of component:
+# 				binary		-	Executable binary
+# 				lib-static	-	Static library
+# 				lib-shared	-	Shared library
+#
+# Optional inputs:
+#
+# BUILD			Type of build to perform:
+# 				release		-	Release build
+# 				debug		-	Debug build (default)
+# OPTCFLAGS		Optional compiler flags for $(BUILD)
+# OPTLDFLAGS		Optional linker flags for $(BUILD)
+# TARGET		Target platform (defaults to host)
+#
+
+###############################################################################
+# Sanity checks
+###############################################################################
+
+ifeq ($(COMPONENT_TYPE),)
+  $(error COMPONENT_TYPE not set)
+endif
+
+# Default build to debug
+ifeq ($(BUILD),)
+  BUILD := debug
+endif
+
+###############################################################################
+# Host/target platform detection
+###############################################################################
+
+HOST := $(shell uname -s)
+ifeq ($(HOST),)
+  # Don't ask
+  HOST := riscos
+else
+  ifeq ($(HOST),RISC OS)
+    HOST := riscos
+  endif
+endif
+
+ifeq ($(TARGET),)
+  # Default target to host. Please add exceptions as required.
+  TARGET := $(HOST)
+endif
+
+# Now setup our tooling
+ifeq ($(TARGET),riscos)
+  ifeq ($(HOST),riscos)
+    # Building on native RISC OS
+    GCCSDK_INSTALL_ENV ?= <NSLibs$$Dir>
+
+    CC := gcc
+    GENHTML := echo
+    INSTALL := echo
+    LCOV := echo
+    PKGCONFIG :=
+
+    # This is nasty, but needed because $(CURDIR) will 
+    # contain colons, and thus confuse make mightily
+    $(shell SetMacro Alias$$$(COMPONENT)pwd Set %0 <FileSwitch$$CurrentFilingSystem>:|<FileSwitch$$<FileSwitch$$CurrentFilingSystem>$$CSD>|mUnset Alias$$$(COMPONENT)pwd)
+    $(shell $(COMPONENT)pwd $(COMPONENT)$$Dir)
+    CURDIR := <$(COMPONENT)$$Dir>
+  else
+    # Cross compiling for RISC OS
+    GCCSDK_INSTALL_ENV ?= /home/riscos/env
+    GCCSDK_INSTALL_CROSSBIN ?= /home/riscos/cross/bin
+
+    AR := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*ar)
+    CC := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
+    GENHTML := echo
+    LCOV := echo
+    PKGCONFIG := $(GCCSDK_INSTALL_ENV)/ro-pkg-config
+ 
+    ifneq ($(findstring arm-unknown-riscos-gcc,$(CC)),)
+      EXEEXT := ,e1f
+    else
+      EXEEXT := ,ff8
+    endif
+  endif
+
+  CFLAGS := $(CFLAGS) -I$(GCCSDK_INSTALL_ENV)/include
+  LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
+
+  # Default prefix
+  PREFIX ?= $(GCCSDK_INSTALL_ENV)
+endif
+
+##############################################################################
+# Tool defaults
+##############################################################################
+
+CP ?= cp
+
+DOXYGEN ?= doxygen
+
+ECHO ?= echo
+
+GENHTML ?= genhtml
+
+INSTALL ?= install
+
+LCOV ?= lcov
+
+MAKE ?= make
+
+MKDIR ?= mkdir
+MKDIRFLAGS ?= -p
+
+PERL ?= perl
+
+PKGCONFIG ?= pkg-config
+
+SED ?= sed
+
+TOUCH ?= touch
+
+###############################################################################
+# Default compiler/linker flags
+###############################################################################
+
+ifeq ($(BUILD),release)
+  OPTCFLAGS ?= -DNDEBUG -O2
+else
+  OPTCFLAGS ?= -g -O0
+  OPTLDFLAGS ?= -g
+endif
+
+CFLAGS := $(CFLAGS) $(OPTCFLAGS)
+LDFLAGS := $(LDFLAGS) $(OPTLDFLAGS)
+
+###############################################################################
+# lib-shared defaults
+###############################################################################
+
+# Default library extension
+ifeq ($(COMPONENT_TYPE),lib-static)
+  LIBEXT ?= .a
+else
+  LIBEXT ?= .so
+endif
+
+# If we're building a shared library, modify the flags appropriately
+ifeq ($(COMPONENT_TYPE),lib-shared)
+  # Default CFLAGS/LDFLAGS for shared libraries
+  SHAREDCFLAGS ?= -fPIC -DPIC
+  SHAREDLDFLAGS ?= -Wl,-shared
+
+  CFLAGS := $(CFLAGS) $(SHAREDCFLAGS)
+  LDFLAGS := $(LDFLAGS) $(SHAREDLDFLAGS)
+endif
+
+###############################################################################
+# Other settings
+###############################################################################
+
+# If GCC can cope with simultaneous build & dep, do that as it's faster
+ifneq ($(GCCVER),2)
+  CC_CAN_BUILD_AND_DEP ?= yes
+endif
+
