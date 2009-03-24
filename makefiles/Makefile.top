@@ -177,6 +177,7 @@ docs: $(BUILDDIR)/stamp
 clean:
 	-$(Q)$(RM) $(RMFLAGS) $(CLEAN_ITEMS)
 	-$(Q)$(RM) $(RMFLAGS) gmon.out
+	-$(Q)$(RM) $(RMFLAGS) -r build/docs
 	-$(Q)$(RM) $(RMFLAGS) -r $(BUILDDIR)
 
 # Remove auto-generated non-build-tree items
