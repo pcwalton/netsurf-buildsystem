@@ -121,7 +121,7 @@ SED ?= sed
 TOUCH ?= touch
 
 ###############################################################################
-# Default compiler/linker flags
+# Default compiler/linker/archiver flags
 ###############################################################################
 
 ifeq ($(BUILD),release)
@@ -129,6 +129,10 @@ ifeq ($(BUILD),release)
 else
   OPTCFLAGS ?= -g -O0
   OPTLDFLAGS ?= -g
+endif
+
+ifeq ($(origin ARFLAGS),default)
+  ARFLAGS := cru
 endif
 
 CFLAGS := $(CFLAGS) $(OPTCFLAGS)
