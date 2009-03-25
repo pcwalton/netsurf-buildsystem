@@ -84,7 +84,7 @@ ifeq ($(TARGET),riscos)
     endif
   endif
 
-  CFLAGS := $(CFLAGS) -I$(GCCSDK_INSTALL_ENV)/include
+  CFLAGS := $(CFLAGS) -mpoke-function-name -I$(GCCSDK_INSTALL_ENV)/include
   LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
 
   # Default prefix
