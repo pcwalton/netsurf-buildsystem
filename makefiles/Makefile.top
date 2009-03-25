@@ -259,7 +259,7 @@ ifeq ($(COMPONENT_TYPE),lib-static)
 	$(Q)$(AR) $(ARFLAGS) $@ $(OBJECTS)
 else
 	$(VQ)$(ECHO) $(ECHOFLAGS) "    LINK: $@"
-	$(Q)$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
+	$(Q)$(CC) -o $@ $(OBJECTS) $(LDFLAGS) $(SHAREDLDFLAGS)
 endif
 
 ###############################################################################
@@ -306,13 +306,15 @@ else
   endef
 endif
 
+BUILDCFLAGS = $(CFLAGS) $(SHAREDCFLAGS)
+
 # Generate dependency rules
 $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
-	$(call dep_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.d)),CFLAGS)))
+	$(call dep_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.d)),BUILDCFLAGS)))
 
 # Generate compilation rules
 $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
-	$(call build_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.o)),CFLAGS)))
+	$(call build_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.o)),BUILDCFLAGS)))
 
 # Similarly for test sources
 ifeq ($(MAKECMDGOALS),test)
