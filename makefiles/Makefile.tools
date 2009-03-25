@@ -10,8 +10,8 @@
 # Optional inputs:
 #
 # BUILD			Type of build to perform:
-# 				release		-	Release build
-# 				debug		-	Debug build (default)
+# 				release		-	Release build (default)
+# 				debug		-	Debug build
 # OPTCFLAGS		Optional compiler flags for $(BUILD)
 # OPTLDFLAGS		Optional linker flags for $(BUILD)
 # TARGET		Target platform (defaults to host)
@@ -25,9 +25,9 @@ ifeq ($(COMPONENT_TYPE),)
   $(error COMPONENT_TYPE not set)
 endif
 
-# Default build to debug
+# Default build to release
 ifeq ($(BUILD),)
-  BUILD := debug
+  BUILD := release
 endif
 
 ###############################################################################
