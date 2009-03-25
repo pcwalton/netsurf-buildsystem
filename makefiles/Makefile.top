@@ -94,6 +94,17 @@ DOCDIR := $(BUILDDIR)/docs
 # Default prefix
 PREFIX ?= /usr/local
 
+# Determine if we want to build testcases
+ifeq ($(MAKECMDGOALS),test)
+  WANT_TEST := yes
+else ifeq ($(MAKECMDGOALS),profile)
+  WANT_TEST := yes
+else ifeq ($(MAKECMDGOALS),coverage)
+  WANT_TEST := yes
+else
+  WANT_TEST := no
+endif
+
 # List of items to delete on clean
 CLEAN_ITEMS :=
 # List of items to delete on distclean
@@ -141,7 +152,8 @@ endif
 # Build targets
 ###############################################################################
 
-.PHONY: all test coverage profile docs clean distclean install uninstall
+.PHONY: all test coverage profile docs clean distclean install uninstall \
+	__precov __partial_clean
 
 # Default target
 all: $(OUTPUT)
@@ -151,10 +163,10 @@ test: $(OUTPUT) $(TEST_BINARIES) $(TEST_TARGETS)
 	$(VQ)$(ECHO) $(ECHOFLAGS) "    TEST: Testing complete"
 
 # Compute coverage
-coverage: clean
+__precov: __partial_clean
 	$(Q)$(LCOV) --directory . --zerocounters
-	$(Q)$(MAKE) test CFLAGS="$(CFLAGS) -fprofile-arcs -ftest-coverage" \
-		LDFLAGS="$(LDFLAGS) -lgcov"
+
+coverage: __precov test
 	$(Q)$(LCOV) --directory $(BUILDDIR) --base-directory $(CURDIR) \
 		--capture --output-file $(COVERAGEDIR)/$(COMPONENT)_tmp.info
 	$(Q)$(LCOV) --extract $(COVERAGEDIR)/$(COMPONENT)_tmp.info \
@@ -164,17 +176,22 @@ coverage: clean
 		$(COVERAGEDIR)/$(COMPONENT).info
 
 # Build for profiling
-profile: clean
-	$(Q)$(MAKE) test CFLAGS="$(CFLAGS) -pg" LDFLAGS="-pg $(LDFLAGS)"
+profile: __partial_clean test
 
 # Compile documentation
 docs: $(BUILDDIR)/stamp
 	$(Q)$(DOXYGEN) build/Doxyfile
 
 # Clean build tree
-clean:
+__partial_clean:
 	-$(Q)$(RM) $(RMFLAGS) $(CLEAN_ITEMS)
 	-$(Q)$(RM) $(RMFLAGS) gmon.out
+	-$(Q)$(RM) $(RMFLAGS) $(wildcard $(BUILDDIR)/*.d)
+	-$(Q)$(RM) $(RMFLAGS) $(wildcard $(BUILDDIR)/*.gcda)
+	-$(Q)$(RM) $(RMFLAGS) $(wildcard $(BUILDDIR)/*.gcno)
+	-$(Q)$(RM) $(RMFLAGS) $(wildcard $(BUILDDIR)/*.o)
+
+clean: __partial_clean
 	-$(Q)$(RM) $(RMFLAGS) -r build/docs
 	-$(Q)$(RM) $(RMFLAGS) -r $(BUILDDIR)
 
@@ -251,7 +268,7 @@ $(BUILDDIR)/stamp:
 	$(Q)$(MKDIR) $(MKDIRFLAGS) $(BUILDDIR)
 	$(Q)$(MKDIR) $(MKDIRFLAGS) $(COVERAGEDIR)
 	$(Q)$(MKDIR) $(MKDIRFLAGS) $(DOCDIR)
-	$(Q)$(TOUCH) $(BUILDDIR)/stamp
+	$(Q)$(TOUCH) $(TOUCHFLAGS) $(BUILDDIR)/stamp
 
 $(OUTPUT): $(BUILDDIR)/stamp $(OBJECTS)
 ifeq ($(COMPONENT_TYPE),lib-static)
@@ -317,7 +334,7 @@ $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
 	$(call build_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.o)),BUILDCFLAGS)))
 
 # Similarly for test sources
-ifeq ($(MAKECMDGOALS),test)
+ifeq ($(WANT_TEST),yes)
   ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
     TESTLIB := $(OUTPUT)
     TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)

@@ -138,6 +138,24 @@ endif
 CFLAGS := $(CFLAGS) $(OPTCFLAGS)
 LDFLAGS := $(LDFLAGS) $(OPTLDFLAGS)
 
+# Extensions for coverage target
+ifeq ($(MAKECMDGOALS),coverage)
+  COVCFLAGS ?= -fprofile-arcs -ftest-coverage
+  COVLDFLAGS ?= -lgcov
+
+  CFLAGS := $(CFLAGS) $(COVCFLAGS)
+  LDFLAGS := $(LDFLAGS) $(COVLDFLAGS)
+endif
+
+# Extensions for profile target
+ifeq ($(MAKECMDGOALS),profile)
+  PROFCFLAGS ?= -pg
+  PROFLDFLAGS ?= -pg
+
+  CFLAGS := $(CFLAGS) $(PROFCFLAGS)
+  LDFLAGS := $(LDFLAGS) $(PROFLDFLAGS)
+endif
+
 ###############################################################################
 # lib-shared defaults
 ###############################################################################

@@ -14,6 +14,7 @@
 # COMPONENT		The name of the component
 # CURDIR		The location of the source tree root
 # EXPORTDIR		The location of the export directory
+# WANT_TEST		Whether to build testcases
 #
 # do_include		Canned command sequence to include a child makefile
 #
@@ -47,7 +48,7 @@ INSTALL_ITEMS_$(d) :=
 SOURCES := $(SOURCES) $(addprefix $(d), $(SRCS_$(d)))
 
 # Test sources
-ifeq ($(MAKECMDGOALS),test)
+ifeq ($(WANT_TEST),yes)
   ifneq ($(DIR_TEST_ITEMS),)
     # Extract the binary name from the ITEM
     binary = $(subst /,_,$(addprefix $(d),$(firstword $(subst :, ,$(ITEM)))))
