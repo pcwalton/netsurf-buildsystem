@@ -127,8 +127,8 @@ $(eval $(foreach INC, $(MAKE_INCLUDES), $(call do_include,$(INC))))
 # Calculate objects to build
 OBJECTS := $(addprefix $(BUILDDIR)/,$(subst /,_,$(subst .c,.o,$(SOURCES))))
 
-TEST_BINARIES := $(addprefix $(BUILDDIR)/, \
-		$(foreach ITEM,$(TEST_ITEMS),$(firstword $(ITEM))))
+bin_for_test = $(addprefix $(BUILDDIR)/,$(firstword $(subst :, ,$(ITEM))))
+TEST_BINARIES := $(foreach ITEM,$(TEST_ITEMS),$(bin_for_test))
 
 # And the output filename
 ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
@@ -331,9 +331,9 @@ ifeq ($(MAKECMDGOALS),test)
 
   endef
 
-  bin_for_test = $(firstword $(subst :, ,$(ITEM)))
   srcs_for_test = $(subst ;, ,$(lastword $(subst :, ,$(ITEM))))
-  objs_for_test = $(addsuffix .o,$(basename $(srcs_for_test)))
+  objs_for_test = $(addprefix $(BUILDDIR)/, \
+		$(subst /,_,$(addsuffix .o,$(basename $(srcs_for_test)))))
 
   $(eval $(foreach ITEM,$(TEST_ITEMS), \
 	$(foreach SOURCE,$(filter %.c,$(srcs_for_test)), \
@@ -345,6 +345,7 @@ ifeq ($(MAKECMDGOALS),test)
 
   $(eval $(foreach ITEM,$(TEST_ITEMS), \
 	$(call link_test,$(objs_for_test),$(bin_for_test),TESTLIB,TESTLDFLAGS)))
+
 endif
 
 # Include dependency makefiles

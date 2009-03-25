@@ -55,8 +55,8 @@ ifeq ($(MAKECMDGOALS),test)
     sources = $(subst ;, ,$(lastword $(subst :, ,$(ITEM))))
 
     # Append test items, prepending $(d) to each source file 
-    TEST_ITEMS_$(d) := $(TEST_ITEMS_$(d)) $(foreach ITEM,$(TEST_ITEMS_$(d)), \
-		$(binary):$(foreach TSRC,$(sources),$(addprefix $(d),$(TSRC))));
+    TEST_ITEMS_$(d) := $(TEST_ITEMS_$(d)) $(foreach ITEM,$(DIR_TEST_ITEMS), \
+		$(binary):$(foreach TSRC,$(sources),$(addprefix $(d),$(TSRC));))
 
     TEST_ITEMS := $(TEST_ITEMS) $(TEST_ITEMS_$(d))
 
@@ -82,7 +82,7 @@ ifneq ($(DIR_INSTALL_ITEMS),)
   # Append items to install (along with install location), prepending $(d)
   # to each item in the file list 
   INSTALL_ITEMS := $(INSTALL_ITEMS) $(foreach ITEM,$(INSTALL_ITEMS_$(d)), \
-		$(dest_dir):$(foreach FILE,$(files),$(addprefix $(d),$(FILE))));
+		$(dest_dir):$(foreach FILE,$(files),$(addprefix $(d),$(FILE));))
 endif
 
 # Reset the inputs
