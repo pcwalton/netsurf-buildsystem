@@ -284,41 +284,54 @@ endif
 ###############################################################################
 
 DEPFILES :=
+BUILDFILES :=
 
 ifeq ($(CC_CAN_BUILD_AND_DEP),yes)
   # C compiler can compile and dep simultaneously
 
   define dep_c
-    $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+    ifeq ($$(findstring $$(BUILDDIR)/$2,$$(DEPFILES)),)
+      $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 
-    DEPFILES += $$(BUILDDIR)/$2
+      DEPFILES += $$(BUILDDIR)/$2
+    endif
 
   endef
 
   define build_c
-    $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+    ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
+      $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
 	$$(Q)$$(CC) -MMD -MP $$($3) -o $$@ -c $1
+
+      BUILDFILES += $$(BUILDDIR)/$2
+    endif
 
   endef
 else
   # C compiler must calculate dependencies first, then compile (default)
 
   define dep_c
-    $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+    ifeq ($$(findstring $$(BUILDDIR)/$2,$$(DEPFILES)),)
+      $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) "     DEP: $1"
 	$$(Q)$$(RM) $$(RMFLAGS) $($@)
 	$$(Q)$$(CC) $$($3) -MM $1 > $$@
 	$$(Q)$$(SED) $$(SEDFLAGS) -i 's,^.*:,$$@ $$(@:.d=.o):,' $$@
 
-    DEPFILES += $$(BUILDDIR)/$2
+      DEPFILES += $$(BUILDDIR)/$2
+    endif
 
   endef
 
   define build_c
-    $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+    ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
+      $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
 	$$(Q)$$(CC) $$($3) -o $$@ -c $1
+
+      BUILDFILES += $(BUILDDIR)/$2
+    endif
 
   endef
 endif
