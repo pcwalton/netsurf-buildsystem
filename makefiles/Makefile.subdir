@@ -3,7 +3,7 @@
 # Inputs (reset on exit)
 #
 # DIR_SOURCES		List of source files in this directory
-# DIR_TEST_SOURCES	List of test source files in this directory
+# DIR_TEST_ITEMS	List of test items in this directory
 # DIR_INSTALL_ITEMS	Items to install in form <destination>:<file1>;<file2>
 #
 # Toolchain is provided by top-level makefile
@@ -25,7 +25,7 @@
 #
 # CLEAN_ITEMS		The list of items to remove for "make clean"
 # DISTCLEAN_ITEMS	The list of items to remove for "make distclean"
-# TEST_SOURCES		The list of sources to build for "make test"
+# TEST_ITEMS		The list of items to build for "make test"
 # TEST_TARGETS		The list of target names to run for "make test"
 # INSTALL_ITEMS		The list of items to (un)install
 #
@@ -40,7 +40,7 @@ d              := $(DIR)
 
 # Sources
 SRCS_$(d) := $(DIR_SOURCES)
-TEST_SRCS_$(d) := $(DIR_TEST_SOURCES)
+TEST_ITEMS_$(d) := 
 INSTALL_ITEMS_$(d) := $(DIR_INSTALL_ITEMS)
 
 # Append to sources for component
@@ -48,15 +48,26 @@ SOURCES := $(SOURCES) $(addprefix $(d), $(SRCS_$(d)))
 
 # Test sources
 ifeq ($(MAKECMDGOALS),test)
-  ifneq ($(DIR_TEST_SOURCES),)
-    TEST_SOURCES := $(TEST_SOURCES) $(addprefix $(d), $(TEST_SRCS_$(d)))
+  ifneq ($(DIR_TEST_ITEMS),)
+    # Extract the binary name from the ITEM
+    binary = $(subst /,_,$(addprefix $(d),$(firstword $(subst :, ,$(ITEM)))))
+    # Extract the list of sources from the ITEM
+    sources = $(subst ;, ,$(lastword $(subst :, ,$(ITEM))))
+
+    # Append test items, prepending $(d) to each source file 
+    TEST_ITEMS_$(d) := $(TEST_ITEMS_$(d)) $(foreach ITEM,$(TEST_ITEMS_$(d)), \
+		$(binary):$(foreach TSRC,$(sources),$(addprefix $(d),$(TSRC))));
+
+    TEST_ITEMS := $(TEST_ITEMS) $(TEST_ITEMS_$(d))
 
     TEST_TARGETS := $(TEST_TARGETS) test_$(d)
 
+    # Extract the binary name from the TEST
+    binary_name = $(firstword $(subst :, ,$(TEST)))
+
     # Target for tests in this directory
     test_$(d): $(d) $(addprefix $(BUILDDIR)/, \
-			$(subst /,_,$(addprefix $(d), \
-			$(basename $(TEST_SRCS_$(d))))))
+			$(foreach TEST,$(TEST_ITEMS_$(d)),$(binary_name)))
 	$(Q)$(TESTRUNNER) $(BUILDDIR) $(CURDIR)/$< $(subst /,_,$<) $(EXEEXT)
   endif
 endif
@@ -64,21 +75,19 @@ endif
 # Install items
 ifneq ($(DIR_INSTALL_ITEMS),)
   # Extract the destination directory from the variable
-  dest_dir_$(d) = $(firstword $(subst :, ,$(INSTALL_ITEMS_$(d))))
+  dest_dir = $(firstword $(subst :, ,$(ITEM)))
   # Extract the list of files to install
-  file_list_$(d) = $(lastword $(subst :, ,$(INSTALL_ITEMS_$(d))))
-  # Split file list into words
-  files_$(d) = $(subst ;, ,$(file_list_$(d)))
+  files = $(subst ;, ,$(lastword $(subst :, ,$(ITEM))))
 
   # Append items to install (along with install location), prepending $(d)
   # to each item in the file list 
-  INSTALL_ITEMS := $(INSTALL_ITEMS) $(dest_dir_$(d)):$(foreach FILE, \
-		$(files_$(d)),$(addprefix $(d),$(FILE)));
+  INSTALL_ITEMS := $(INSTALL_ITEMS) $(foreach ITEM,$(INSTALL_ITEMS_$(d)), \
+		$(dest_dir):$(foreach FILE,$(files),$(addprefix $(d),$(FILE))));
 endif
 
 # Reset the inputs
 DIR_SOURCES :=
-DIR_TEST_SOURCES :=
+DIR_TEST_ITEMS :=
 DIR_INSTALL_ITEMS :=
 
 # Now include any children we may have

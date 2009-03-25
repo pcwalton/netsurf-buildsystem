@@ -35,7 +35,7 @@
 #
 # TESTRUNNER		Test runner invocation command
 # 			The test runner takes a command line in the form
-# 				<build dir> <test dir> <exeext>
+# 				<build dir> <test dir> <testprefix> <exeext>
 #
 # Targets provided:
 #
@@ -99,8 +99,8 @@ CLEAN_ITEMS :=
 # List of items to delete on distclean
 DISTCLEAN_ITEMS :=
 
-# List of sources to build for testing
-TEST_SOURCES :=
+# List of items to build for testing
+TEST_ITEMS :=
 # List of targets to run for testing
 TEST_TARGETS :=
 
@@ -127,10 +127,8 @@ $(eval $(foreach INC, $(MAKE_INCLUDES), $(call do_include,$(INC))))
 # Calculate objects to build
 OBJECTS := $(addprefix $(BUILDDIR)/,$(subst /,_,$(subst .c,.o,$(SOURCES))))
 
-TEST_OBJECTS := $(addprefix $(BUILDDIR)/,$(subst /,_, \
-		$(subst .c,.o,$(TEST_SOURCES))))
-TEST_BINARIES := $(addprefix $(BUILDDIR)/,$(subst /,_, \
-		$(basename $(TEST_SOURCES))))
+TEST_BINARIES := $(addprefix $(BUILDDIR)/, \
+		$(foreach ITEM,$(TEST_ITEMS),$(firstword $(ITEM))))
 
 # And the output filename
 ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
@@ -333,15 +331,20 @@ ifeq ($(MAKECMDGOALS),test)
 
   endef
 
-$(eval $(foreach SOURCE,$(filter %.c,$(TEST_SOURCES)), \
-	$(call dep_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.d)),TESTCFLAGS)))
+  bin_for_test = $(firstword $(subst :, ,$(ITEM)))
+  srcs_for_test = $(subst ;, ,$(lastword $(subst :, ,$(ITEM))))
+  objs_for_test = $(addsuffix .o,$(basename $(srcs_for_test)))
 
-$(eval $(foreach SOURCE,$(filter %.c,$(TEST_SOURCES)), \
-	$(call build_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.o)),TESTCFLAGS)))
+  $(eval $(foreach ITEM,$(TEST_ITEMS), \
+	$(foreach SOURCE,$(filter %.c,$(srcs_for_test)), \
+	$(call dep_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.d)),TESTCFLAGS))))
 
-$(eval $(foreach BINARY,$(TEST_BINARIES), \
-	$(call link_test, \
-		$(addsuffix .o,$(BINARY)),$(BINARY),TESTLIB,TESTLDFLAGS)))
+  $(eval $(foreach ITEM,$(TEST_ITEMS), \
+	$(foreach SOURCE,$(filter %.c,$(srcs_for_test)), \
+	$(call build_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.o)),TESTCFLAGS))))
+
+  $(eval $(foreach ITEM,$(TEST_ITEMS), \
+	$(call link_test,$(objs_for_test),$(bin_for_test),TESTLIB,TESTLDFLAGS)))
 endif
 
 # Include dependency makefiles
