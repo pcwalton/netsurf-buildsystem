@@ -6,6 +6,7 @@
 # 				binary		-	Executable binary
 # 				lib-static	-	Static library
 # 				lib-shared	-	Shared library
+# 				riscos-module	-	RISC OS module
 #
 # Optional inputs:
 #
@@ -56,6 +57,7 @@ ifeq ($(TARGET),riscos)
     GCCSDK_INSTALL_ENV ?= <NSLibs$$Dir>
 
     CC := gcc
+    CMHG := cmunge
     GENHTML := echo
     INSTALL := echo
     LCOV := echo
@@ -73,19 +75,27 @@ ifeq ($(TARGET),riscos)
 
     AR := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*ar)
     CC := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
+    CMHG := PATH="$(GCCSDK_INSTALL_CROSSBIN):$(PATH)" $(GCCSDK_INSTALL_CROSSBIN)/cmunge
     GENHTML := echo
+    HOST_CC := cc
     LCOV := echo
     PKGCONFIG := $(GCCSDK_INSTALL_ENV)/ro-pkg-config
- 
-    ifneq ($(findstring arm-unknown-riscos-gcc,$(CC)),)
-      EXEEXT := ,e1f
+
+    ifneq ($(COMPONENT_TYPE),riscos-module)
+      ifneq ($(findstring arm-unknown-riscos-gcc,$(CC)),)
+        EXEEXT := ,e1f
+      else
+        EXEEXT := ,ff8
+      endif
     else
-      EXEEXT := ,ff8
+      EXEEXT := ,ffa
     endif
   endif
 
   CFLAGS := $(CFLAGS) -mpoke-function-name -I$(GCCSDK_INSTALL_ENV)/include
   LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
+
+  CMHGFLAGS := -p -tgcc -32bit -apcs 3/32/nonreent/fpe2/noswst/nofpr/nofp
 
   # Default prefix
   PREFIX ?= $(GCCSDK_INSTALL_ENV)
@@ -103,6 +113,8 @@ ECHO ?= echo
 
 GENHTML ?= genhtml
 
+HOST_CC ?= $(CC)
+
 INSTALL ?= install
 
 LCOV ?= lcov
@@ -111,6 +123,8 @@ MAKE ?= make
 
 MKDIR ?= mkdir
 MKDIRFLAGS ?= -p
+
+MV ?= mv
 
 PERL ?= perl
 
@@ -174,6 +188,19 @@ ifeq ($(COMPONENT_TYPE),lib-shared)
   # Default CFLAGS/LDFLAGS for shared libraries
   SHAREDCFLAGS ?= -fPIC -DPIC
   SHAREDLDFLAGS ?= -shared
+endif
+
+###############################################################################
+# RISC OS module extensions
+###############################################################################
+
+ifeq ($(COMPONENT_TYPE),riscos-module)
+  ifneq ($(TARGET),riscos)
+    $(error Attempting to build a RISC OS module for a non-RISC OS target)
+  endif
+
+  CFLAGS := $(CFLAGS) -mmodule
+  LDFLAGS := $(LDFLAGS) -mmodule
 endif
 
 ###############################################################################

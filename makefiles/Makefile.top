@@ -10,6 +10,7 @@
 # 				binary		-	Executable binary
 # 				lib-static	-	Static library
 # 				lib-shared	-	Shared library
+# 				riscos-module	-	RISC OS module
 # TARGET		Target platform identifier
 #
 # Optional inputs:
@@ -118,14 +119,21 @@ TEST_TARGETS :=
 # List of items to (un)install
 INSTALL_ITEMS :=
 
+# List of targets to run before building $(OBJECT)
+PRE_TARGETS :=
+# List of targets to run after building $(OBJECT)
+POST_TARGETS :=
+
 # Source files
 SOURCES :=
 
 # Include configuration Makefile fragment
 -include Makefile.config
 
-# Include Makefile fragments in subdirectories
+# Set the default target (before including any children)
+__default: all
 
+# Include Makefile fragments in subdirectories
 define do_include
 DIR := $$(dir $(1))
 include $(1)
@@ -136,12 +144,14 @@ MAKE_INCLUDES := $(wildcard */Makefile)
 $(eval $(foreach INC, $(MAKE_INCLUDES), $(call do_include,$(INC))))
 
 # Calculate objects to build
-OBJECTS := $(addprefix $(BUILDDIR)/,$(subst /,_,$(subst .c,.o,$(SOURCES))))
+OBJECTS := $(addprefix $(BUILDDIR)/,$(filter %.o, \
+		$(subst /,_,$(subst .c,.o,$(SOURCES))) \
+		$(subst /,_,$(subst .cmhg,.o,$(SOURCES)))))
 
 bin_for_test = $(addprefix $(BUILDDIR)/,$(firstword $(subst :, ,$(ITEM))))
 TEST_BINARIES := $(foreach ITEM,$(TEST_ITEMS),$(bin_for_test))
 
-# And the output filename
+# Determine the output filename
 ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
   OUTPUT := $(BUILDDIR)/lib$(COMPONENT)$(LIBEXT)
 else
@@ -153,10 +163,10 @@ endif
 ###############################################################################
 
 .PHONY: all test coverage profile docs clean distclean install uninstall \
-	__precov __partial_clean
+	__default __precov __partial_clean
 
 # Default target
-all: $(OUTPUT)
+all: $(PRE_TARGETS) $(OUTPUT) $(POST_TARGETS)
 
 # Build and execute testsuite 
 test: $(OUTPUT) $(TEST_BINARIES) $(TEST_TARGETS)
@@ -231,7 +241,7 @@ define install_to_dest
 
 endef
 
-install: $(OUTPUT)
+install: all
 	$(foreach ITEM,$(INSTALL_ITEMS), \
 		$(call install_to_dest,$(firstword $(subst :, ,$(ITEM))), \
 			$(lastword $(subst :, ,$(ITEM)))))
@@ -330,11 +340,22 @@ else
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
 	$$(Q)$$(CC) $$($3) -o $$@ -c $1
 
-      BUILDFILES += $(BUILDDIR)/$2
+      BUILDFILES += $$(BUILDDIR)/$2
     endif
 
   endef
 endif
+
+define build_cmhg
+  ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
+    $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+	$$(VQ)$$(ECHO) $$(ECHOFLAGS) "    CMHG: $1"
+	$$(Q)$$(CMHG) $$(CMHGFLAGS) $1 -o $$@
+
+    BUILDFILES += $$(BUILDDIR)/$2
+  endif
+
+endef
 
 BUILDCFLAGS = $(CFLAGS) $(SHAREDCFLAGS)
 
@@ -345,6 +366,9 @@ $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
 # Generate compilation rules
 $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
 	$(call build_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.o)),BUILDCFLAGS)))
+
+$(eval $(foreach SOURCE,$(filter %.cmhg,$(SOURCES)), \
+	$(call build_cmhg,$(SOURCE),$(subst /,_,$(SOURCE:.cmhg=.o)))))
 
 # Similarly for test sources
 ifeq ($(WANT_TEST),yes)
