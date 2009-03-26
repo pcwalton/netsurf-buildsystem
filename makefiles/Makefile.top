@@ -169,7 +169,7 @@ endif
 all: $(PRE_TARGETS) $(OUTPUT) $(POST_TARGETS)
 
 # Build and execute testsuite 
-test: $(OUTPUT) $(TEST_BINARIES) $(TEST_TARGETS)
+test: all $(TEST_BINARIES) $(TEST_TARGETS)
 	$(VQ)$(ECHO) $(ECHOFLAGS) "    TEST: Testing complete"
 
 # Compute coverage
