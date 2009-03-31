@@ -24,6 +24,7 @@
 # HOST			Host platform identifier
 # PREFIX		Absolute installation path prefix 
 # 				(defaults to /usr/local)
+# REQUIRED_PKGS		List of required pkg-config packages
 #
 # The client may also override all toolchain settings, including:
 #
@@ -216,9 +217,18 @@ distclean: clean
 #
 # We also permit a trailing ';' in the file list.
 
+__comma := ,
+__empty := 
+__space := $(empty) $(empty)
+__required = $(subst $(__space),$(__comma) ,$(strip $(REQUIRED_PKGS)))
+
 # Install a pkg-config control file ($1) to the specified location ($2)
 define install_pkgconfig
 	$(Q)$(SED) -e 's#PREFIX#$(PREFIX)#' $1 >$(BUILDDIR)/$(1:.in=)
+  $(if $(REQUIRED_PKGS), \
+	$(Q)$(SED) -i -e 's#REQUIRED#Requires: $(__required)#' \
+		$(BUILDDIR)/$(1:.in=), \
+	$(Q)$(SED) -i -e 's#REQUIRED##' $(BUILDDIR)/$(1:.in=))
 	$(INSTALL) $(INSTALLFLAGS) -m 644 $(BUILDDIR)/$(1:.in=) $2
 
 endef
