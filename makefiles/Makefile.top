@@ -269,9 +269,9 @@ endef
 # TODO: Is this scheme portable?
 define install_shared_lib
   $(INSTALL) $(INSTALLFLAGS) -m 755 $1 $2/$(notdir $1).$(COMPONENT_VERSION)
-  $(LN) $(LNFLAGS) -fs $2/$(notdir $1).$(COMPONENT_VERSION) \
+  $(LN) $(LNFLAGS) -fs $(notdir $1).$(COMPONENT_VERSION) \
 	$2/$(notdir $1).$(major-version)
-  $(LN) $(LNFLAGS) -fs $2/$(notdir $1).$(COMPONENT_VERSION) $2/$(notdir $1)
+  $(LN) $(LNFLAGS) -fs $(notdir $1).$(COMPONENT_VERSION) $2/$(notdir $1)
 endef
 
 # Install a file ($1) to the specified location ($2)
