@@ -6,6 +6,7 @@
 # 				release		-	Release build
 # 				debug		-	Debug build
 # COMPONENT		Name of the component (sans leading "lib" iff a library)
+# COMPONENT_VERSION	Component version number (x.y.z)
 # COMPONENT_TYPE	Type of component:
 # 				binary		-	Executable binary
 # 				lib-static	-	Static library
@@ -50,6 +51,13 @@
 # distclean		Remove distribution files, too
 # install		Install component into prefix.
 # uninstall		Remove component from prefix.
+#
+# Variables provided:
+#
+# major-version		Extracts the major version (x) from COMPONENT_VERSION
+# minor-version		Extracts the minor version (y) from COMPONENT_VERSION
+# patch-version		Extracts the patch version (z) from COMPONENT_VERSION
+# OUTPUT		Path + filename of build target
 
 ###############################################################################
 # Sanity checks
@@ -58,6 +66,11 @@
 # Name of component must be defined by client
 ifeq ($(COMPONENT),)
   $(error COMPONENT not defined)
+endif
+
+# As must the version
+ifeq ($(COMPONENT_VERSION),)
+  $(error COMPONENT_VERSION not defined)
 endif
 
 # As must the component type
@@ -81,6 +94,14 @@ endif
 
 Q ?= @
 VQ ?= @
+
+##############################################################################
+# Exported variables (also OUTPUT, further down)
+##############################################################################
+
+major-version := $(word 1,$(subst ., ,$(COMPONENT_VERSION)))
+minor-version := $(word 2,$(subst ., ,$(COMPONENT_VERSION)))
+patch-version := $(word 3,$(subst ., ,$(COMPONENT_VERSION)))
 
 ##############################################################################
 # Build environment
@@ -154,7 +175,7 @@ TEST_BINARIES := $(foreach ITEM,$(TEST_ITEMS),$(bin_for_test))
 
 # Determine the output filename
 ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
-  OUTPUT := $(BUILDDIR)/lib$(COMPONENT)$(LIBEXT)
+  OUTPUT := $(BUILDDIR)/lib$(COMPONENT)$(major-version)$(LIBEXT)
 else
   OUTPUT := $(BUILDDIR)/$(COMPONENT)$(EXEEXT)
 endif
@@ -164,7 +185,14 @@ endif
 ###############################################################################
 
 .PHONY: all test coverage profile docs clean distclean install uninstall \
-	__default __precov __partial_clean
+	__default __precov __partial_clean __postshared
+
+ifeq ($(COMPONENT_TYPE),lib-shared)
+  POST_TARGETS := __postshared $(POST_TARGETS)
+
+__postshared:
+	$(Q)$(LN) $(LNFLAGS) -fs $(notdir $(OUTPUT)) $(OUTPUT).$(major-version)
+endif
 
 # Default target
 all: $(PRE_TARGETS) $(OUTPUT) $(POST_TARGETS)
@@ -225,20 +253,36 @@ __required = $(subst $(__space),$(__comma) ,$(strip $(REQUIRED_PKGS)))
 # Install a pkg-config control file ($1) to the specified location ($2)
 define install_pkgconfig
 	$(Q)$(SED) -e 's#PREFIX#$(PREFIX)#' $1 >$(BUILDDIR)/$(1:.in=)
+	$(Q)$(SED) -i -e 's#MAJOR#$(major-version)#' $(BUILDDIR)/$(1:.in=)
+	$(Q)$(SED) -i -e 's#MINOR#$(minor-version)#' $(BUILDDIR)/$(1:.in=)
+	$(Q)$(SED) -i -e 's#PATCH#$(patch-version)#' $(BUILDDIR)/$(1:.in=)
+	$(Q)$(SED) -i -e 's#VERSION#$(COMPONENT_VERSION)#' $(BUILDDIR)/$(1:.in=)
   $(if $(REQUIRED_PKGS), \
 	$(Q)$(SED) -i -e 's#REQUIRED#Requires: $(__required)#' \
 		$(BUILDDIR)/$(1:.in=), \
 	$(Q)$(SED) -i -e 's#REQUIRED##' $(BUILDDIR)/$(1:.in=))
-	$(INSTALL) $(INSTALLFLAGS) -m 644 $(BUILDDIR)/$(1:.in=) $2
+	$(INSTALL) $(INSTALLFLAGS) -m 644 $(BUILDDIR)/$(1:.in=) \
+		$2/$(1:.pc.in=)-$(major-version).pc
 
+endef
+
+# TODO: Is this scheme portable?
+define install_shared_lib
+  $(INSTALL) $(INSTALLFLAGS) -m 755 $1 $2/$(notdir $1).$(COMPONENT_VERSION)
+  $(LN) $(LNFLAGS) -fs $2/$(notdir $1).$(COMPONENT_VERSION) \
+	$2/$(notdir $1).$(major-version)
+  $(LN) $(LNFLAGS) -fs $2/$(notdir $1).$(COMPONENT_VERSION) $2/$(notdir $1)
 endef
 
 # Install a file ($1) to the specified location ($2)
 define install_file
   $(if $1, \
-	$(if $(findstring .pc.in,$1), \
-		$(call install_pkgconfig,$1,$2), \
-		$(INSTALL) $(INSTALLFLAGS) -m 644 $1 $2))
+    $(if $(findstring .pc.in,$1), \
+      $(call install_pkgconfig,$1,$2), \
+      $(if $(and $(filter lib-shared,$(COMPONENT_TYPE)), \
+		$(filter $(OUTPUT),$1)), \
+	$(call install_shared_lib,$1,$2), \
+	$(INSTALL) $(INSTALLFLAGS) -m 644 $1 $2)))
 
 endef
 
@@ -258,12 +302,20 @@ install: all
 
 # Uninstallation
 
+# TODO: Work out how to safely remove symlinks
+define uninstall_shared_lib
+	$(RM) $(RMFLAGS) $2/$(notdir $1).$(COMPONENT_VERSION)
+endef
+
 # Uninstall a file ($1) from the specified location ($2)
 define uninstall_file
   $(if $1, \
-	$(if $(findstring .pc.in,$1), \
-		$(RM) $(RMFLAGS) $2/$(notdir $(1:.in=)), \
-		$(RM) $(RMFLAGS) $2/$(notdir $1)))
+    $(if $(findstring .pc.in,$1), \
+      $(RM) $(RMFLAGS) $2/$(1:.pc.in=)-$(major-version).pc, \
+      $(if $(and $(filter lib-shared,$(COMPONENT_TYPE)), \
+		$(filter $(OUTPUT),$1)), \
+	$(call uninstall_shared_lib,$1,$2), \
+	$(RM) $(RMFLAGS) $2/$(notdir $1))))
 
 endef
 
@@ -384,7 +436,7 @@ $(eval $(foreach SOURCE,$(filter %.cmhg,$(SOURCES)), \
 ifeq ($(WANT_TEST),yes)
   ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
     TESTLIB := $(OUTPUT)
-    TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)
+    TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)$(major-version)
   endif
 
   TESTCFLAGS += $(CFLAGS)

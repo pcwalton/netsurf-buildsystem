@@ -84,7 +84,8 @@ ifeq ($(WANT_TEST),yes)
     # Target for tests in this directory
     test_$(d): $(d) $(addprefix $(BUILDDIR)/, \
 			$(foreach TEST,$(TEST_ITEMS_$(d)),$(binary_name)))
-	$(Q)$(TESTRUNNER) $(BUILDDIR) $(CURDIR)/$< $(subst /,_,$<) $(EXEEXT)
+	$(Q)$(SHAREDLDPATH) $(TESTRUNNER) $(BUILDDIR) \
+		$(CURDIR)/$< $(subst /,_,$<) $(EXEEXT)
   endif
 endif
 
