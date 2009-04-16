@@ -43,6 +43,13 @@ else
   ifeq ($(HOST),RISC OS)
     HOST := riscos
   endif
+
+  ifeq ($(HOST),BeOS)
+    HOST := beos
+  endif
+  ifeq ($(HOST),Haiku)
+    HOST := beos
+  endif
 endif
 
 ifeq ($(TARGET),)
@@ -99,6 +106,21 @@ ifeq ($(TARGET),riscos)
 
   # Default prefix
   PREFIX ?= $(GCCSDK_INSTALL_ENV)
+endif
+
+ifeq ($(TARGET),beos)
+  ifeq ($(HOST),beos)
+    CC := gcc
+    CXX := g++
+    PKG_CONFIG :=
+
+    GCCVER := 2
+  else
+    $(error Cross-compiling for BeOS is not supported)
+  endif
+
+  # Default prefix
+  PREFIX ?= /boot/develop
 endif
 
 ##############################################################################
