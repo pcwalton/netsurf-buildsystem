@@ -112,7 +112,7 @@ ifeq ($(TARGET),beos)
   ifeq ($(HOST),beos)
     CC := gcc
     CXX := g++
-    PKG_CONFIG :=
+    PKGCONFIG :=
 
     GCCVER := 2
 
