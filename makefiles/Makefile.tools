@@ -115,12 +115,12 @@ ifeq ($(TARGET),beos)
     PKG_CONFIG :=
 
     GCCVER := 2
+
+    # Default prefix
+    PREFIX ?= /boot/common
   else
     $(error Cross-compiling for BeOS is not supported)
   endif
-
-  # Default prefix
-  PREFIX ?= /boot/develop
 endif
 
 ##############################################################################
