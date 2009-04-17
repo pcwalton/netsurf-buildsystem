@@ -48,13 +48,21 @@ else
     HOST := beos
   endif
   ifeq ($(HOST),Haiku)
-    HOST := beos
+    HOST := haiku
   endif
 endif
 
 ifeq ($(TARGET),)
   # Default target to host. Please add exceptions as required.
   TARGET := $(HOST)
+
+  ifeq ($(HOST),haiku)
+    # This isn't necessarily correct -- they have differences. However, in the 
+    # general case, this will work. If there are differences that are actually 
+    # important wrt the target platform (as opposed to the build host) then 
+    # we'll just have to introduce a haiku target, too.
+    TARGET := beos
+  endif
 endif
 
 # Now setup our tooling
@@ -108,18 +116,29 @@ ifeq ($(TARGET),riscos)
   PREFIX ?= $(GCCSDK_INSTALL_ENV)
 endif
 
+# BeOS-like targets
 ifeq ($(TARGET),beos)
   ifeq ($(HOST),beos)
+    # Building on BeOS
     CC := gcc
-    CXX := g++
+
+    # No pkg-config
     PKGCONFIG :=
 
     GCCVER := 2
 
     # Default prefix
-    PREFIX ?= /boot/common
+    PREFIX ?= /boot/home/config
   else
-    $(error Cross-compiling for BeOS is not supported)
+    ifeq ($(HOST),haiku)
+      # Building on Haiku
+      GCCVER := 2
+
+      # Default prefix
+      PREFIX ?= /boot/common
+    else
+      $(error Cross-compiling for BeOS is not supported)
+    endif
   endif
 endif
 
