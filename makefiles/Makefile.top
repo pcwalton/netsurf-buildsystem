@@ -442,7 +442,11 @@ $(eval $(foreach SOURCE,$(filter %.cmhg,$(SOURCES)), \
 ifeq ($(WANT_TEST),yes)
   ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
     TESTLIB := $(OUTPUT)
-    TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)$(major-version)
+    ifeq ($(findstring lib-shared,$(COMPONENT_TYPE)),lib-shared)
+      TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)
+    else
+      TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)$(major-version)
+    endif
   endif
 
   TESTCFLAGS += $(CFLAGS)
