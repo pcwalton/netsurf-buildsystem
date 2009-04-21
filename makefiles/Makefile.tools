@@ -231,7 +231,7 @@ ifeq ($(COMPONENT_TYPE),lib-shared)
   # Default CFLAGS/LDFLAGS for shared libraries
   SHAREDCFLAGS ?= -fPIC -DPIC
   SHAREDLDFLAGS ?= -shared \
-	-Wl,-soname,$(notdir $(OUTPUT)).$(major-version)
+	-Wl,-soname,$(SONAME)
   SHAREDLDPATH ?= LD_LIBRARY_PATH="$(BUILDDIR):$(LD_LIBRARY_PATH)"
 endif
 
