@@ -180,7 +180,7 @@ ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
     SONAME := $(SHAREDLIBNAME).$(major-version)
     OUTPUT := $(BUILDDIR)/$(SHAREDLIBNAME).$(COMPONENT_VERSION)
   else
-    OUTPUT := $(BUILDDIR)/lib$(COMPONENT)$(major-version)$(LIBEXT)
+    OUTPUT := $(BUILDDIR)/lib$(COMPONENT)$(LIBEXT)
   endif
 else
   OUTPUT := $(BUILDDIR)/$(COMPONENT)$(EXEEXT)
@@ -442,11 +442,7 @@ $(eval $(foreach SOURCE,$(filter %.cmhg,$(SOURCES)), \
 ifeq ($(WANT_TEST),yes)
   ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
     TESTLIB := $(OUTPUT)
-    ifeq ($(findstring lib-shared,$(COMPONENT_TYPE)),lib-shared)
-      TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)
-    else
-      TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)$(major-version)
-    endif
+    TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)
   endif
 
   TESTCFLAGS += $(CFLAGS)
