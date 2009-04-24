@@ -255,19 +255,19 @@ distclean: clean
 __comma := ,
 __empty := 
 __space := $(empty) $(empty)
-__required = $(subst $(__space),$(__comma) ,$(strip $(REQUIRED_PKGS)))
+__required = $(if $(REQUIRED_PKGS), \
+	Requires: $(subst $(__space),$(__comma) ,$(strip $(REQUIRED_PKGS))), )
 
 # Install a pkg-config control file ($1) to the specified location ($2)
 define install_pkgconfig
-	$(Q)$(SED) -e 's#PREFIX#$(PREFIX)#' $1 >$(BUILDDIR)/$(1:.in=)
-	$(Q)$(SED) -i -e 's#MAJOR#$(major-version)#' $(BUILDDIR)/$(1:.in=)
-	$(Q)$(SED) -i -e 's#MINOR#$(minor-version)#' $(BUILDDIR)/$(1:.in=)
-	$(Q)$(SED) -i -e 's#PATCH#$(patch-version)#' $(BUILDDIR)/$(1:.in=)
-	$(Q)$(SED) -i -e 's#VERSION#$(COMPONENT_VERSION)#' $(BUILDDIR)/$(1:.in=)
-  $(if $(REQUIRED_PKGS), \
-	$(Q)$(SED) -i -e 's#REQUIRED#Requires: $(__required)#' \
-		$(BUILDDIR)/$(1:.in=), \
-	$(Q)$(SED) -i -e 's#REQUIRED##' $(BUILDDIR)/$(1:.in=))
+	$(Q)$(SED) \
+		-e 's#PREFIX#$(PREFIX)#' \
+		-e 's#MAJOR#$(major-version)#' \
+		-e 's#MINOR#$(minor-version)#' \
+		-e 's#PATCH#$(patch-version)#' \
+		-e 's#VERSION#$(COMPONENT_VERSION)#' \
+		-e 's#REQUIRED#$(__required)#' \
+		$1 >$(BUILDDIR)/$(1:.in=)
 	$(INSTALL) $(INSTALLFLAGS) -m 644 $(BUILDDIR)/$(1:.in=) \
 		$2/$(1:.in=)
 
@@ -394,8 +394,9 @@ else
       $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) "     DEP: $1"
 	$$(Q)$$(RM) $$(RMFLAGS) $($@)
-	$$(Q)$$(CC) $$($3) -MM $1 > $$@
-	$$(Q)$$(SED) $$(SEDFLAGS) -i 's,^.*:,$$@ $$(@:.d=.o):,' $$@
+	$$(Q)$$(CC) $$($3) -MM $1 > $$@.tmp
+	$$(Q)$$(SED) $$(SEDFLAGS) 's,^.*:,$$@ $$(@:.d=.o):,' < $$@.tmp > $$@
+	$$(Q)$$(RM) $$@.tmp
 
       DEPFILES += $$(BUILDDIR)/$2
     endif
