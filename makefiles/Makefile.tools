@@ -71,12 +71,12 @@ ifeq ($(TARGET),riscos)
     # Building on native RISC OS
     GCCSDK_INSTALL_ENV ?= <NSLibs$$Dir>
 
-    CC := gcc
-    CMHG := cmunge
-    GENHTML := echo
-    INSTALL := echo
-    LCOV := echo
-    PKGCONFIG :=
+    CC__ := gcc
+    CMHG ?= cmunge
+    GENHTML ?= echo
+    INSTALL ?= echo
+    LCOV ?= echo
+    PKGCONFIG ?=
 
     # This is nasty, but needed because $(CURDIR) will 
     # contain colons, and thus confuse make mightily
@@ -88,13 +88,13 @@ ifeq ($(TARGET),riscos)
     GCCSDK_INSTALL_ENV ?= /home/riscos/env
     GCCSDK_INSTALL_CROSSBIN ?= /home/riscos/cross/bin
 
-    AR := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*ar)
-    CC := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
-    CMHG := PATH="$(GCCSDK_INSTALL_CROSSBIN):$(PATH)" $(GCCSDK_INSTALL_CROSSBIN)/cmunge
-    GENHTML := echo
-    HOST_CC := cc
-    LCOV := echo
-    PKGCONFIG := $(GCCSDK_INSTALL_ENV)/ro-pkg-config
+    AR ?= $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*ar)
+    CC__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
+    CMHG ?= PATH="$(GCCSDK_INSTALL_CROSSBIN):$(PATH)" $(GCCSDK_INSTALL_CROSSBIN)/cmunge
+    GENHTML ?= echo
+    HOST_CC ?= cc
+    LCOV ?= echo
+    PKGCONFIG ?= $(GCCSDK_INSTALL_ENV)/ro-pkg-config
 
     ifneq ($(COMPONENT_TYPE),riscos-module)
       ifneq ($(findstring arm-unknown-riscos-gcc,$(CC)),)
@@ -120,10 +120,10 @@ endif
 ifeq ($(TARGET),beos)
   ifeq ($(HOST),beos)
     # Building on BeOS
-    CC := gcc
+    CC__ := gcc
 
     # No pkg-config
-    PKGCONFIG :=
+    PKGCONFIG ?=
 
     GCCVER := 2
 
@@ -255,5 +255,18 @@ endif
 # If GCC can cope with simultaneous build & dep, do that as it's faster
 ifneq ($(GCCVER),2)
   CC_CAN_BUILD_AND_DEP ?= yes
+endif
+
+# Finally, set CC to the correct compiler
+ifeq ($(findstring ccc-analyzer,$(CC)),ccc-analyzer)
+    # We're being invoked by scan-build, so export 
+    # the compiler we would have used such that
+    # scan-build works with cross-compilation
+    export CCC_CC := $(CC__)
+else
+  # Only set CC if it's not already set in the environment
+  ifndef $(CC)
+    CC := $(CC__)
+  endif
 endif
 
