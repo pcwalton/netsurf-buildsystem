@@ -156,7 +156,7 @@ SOURCES :=
 # If we're performing static analysis, then override CC
 ifeq ($(MAKECMDGOALS),scan)
   # Only if it's not already ccc-analyzer
-  ifeq ($(findstring ccc-analyzer,$(CC)),ccc-analyzer)
+  ifneq ($(findstring ccc-analyzer,$(CC)),ccc-analyzer)
     # Need this in the environment
     export CCC_CC := $(CC)
     CC := build/llvm/ccc-analyzer
