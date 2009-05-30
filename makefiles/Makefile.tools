@@ -261,12 +261,20 @@ endif
 ifeq ($(findstring ccc-analyzer,$(CC)),ccc-analyzer)
     # We're being invoked by scan-build, so export 
     # the compiler we would have used such that
-    # scan-build works with cross-compilation
-    export CCC_CC := $(CC__)
+    # scan-build works with cross-compilation.
+    # There's no need to do this if we would have
+    # used the default compiler.
+    ifdef CC__
+      export CCC_CC := $(CC__)
+    endif
 else
-  # Only set CC if it's not already set in the environment
-  ifndef $(CC)
-    CC := $(CC__)
+  # Only set CC if it's not already set in the 
+  # environment and we have a value for it. 
+  # Otherwise, leave it to be defaulted.
+  ifeq ($(origin CC),default)
+    ifdef CC__
+      CC := $(CC__)
+    endif
   endif
 endif
 
