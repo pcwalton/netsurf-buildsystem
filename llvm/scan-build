@@ -17,6 +17,7 @@ use warnings;
 use FindBin qw($RealBin);
 use Digest::MD5;
 use File::Basename;
+use File::Spec;
 use Term::ANSIColor;
 use Term::ANSIColor qw(:constants);
 use Cwd qw/ getcwd abs_path /;
@@ -81,6 +82,41 @@ sub DieDiag {
 # Some initial preprocessing of Clang options.
 ##----------------------------------------------------------------------------##
 
+my $ClangPath = undef;
+
+sub Which {
+  my $bin = shift;
+  my @paths = File::Spec->path();
+
+  foreach my $p (@paths) {
+    my $candidate = File::Spec->catfile($p, $bin);
+
+    if (-x $candidate) {
+      $ClangPath = $p;
+      return $candidate;
+    }
+  }
+
+  return undef;
+}
+
+# First, look for 'clang' in bin.
+my $ClangSB = Cwd::realpath("$RealBin/bin/clang");
+# Second, look for 'clang' in same directory as scan-build
+if (!defined $ClangSB || ! -x $ClangSB) {
+  $ClangSB = Cwd::realpath("$RealBin/clang");
+}
+# Third, look for 'clang' in ../bin
+if (!defined $ClangSB || ! -x $ClangSB) {
+  $ClangSB = Cwd::realpath("$RealBin/../bin/clang");
+}
+# Finally, default to looking for 'clang' in the path.
+if (!defined $ClangSB || ! -x $ClangSB) {
+  $ClangSB = Which("clang");
+}
+my $Clang = $ClangSB;
+
+
 # First, look for 'clang-cc' in libexec.
 my $ClangCCSB = Cwd::realpath("$RealBin/libexec/clang-cc");
 # Second, look for 'clang-cc' in the same directory as scan-build.
@@ -93,24 +129,20 @@ if (!defined $ClangCCSB || ! -x $ClangCCSB) {
 }
 # Finally, default to looking for 'clang-cc' in the path.
 if (!defined $ClangCCSB || ! -x $ClangCCSB) {
-  $ClangCCSB = "clang-cc";
+  if (defined $ClangPath) {
+    my @dirs = ( $ClangPath, "..", "libexec" );
+    my $candidate = File::Spec->catfile(@dirs, "clang-cc");
+
+    if (-x $candidate) {
+      $ClangCCSB = $candidate;
+    } else {
+      $ClangCCSB = "clang-cc";
+    }
+  } else {
+    $ClangCCSB = "clang-cc";
+  }
 }
 my $ClangCC = $ClangCCSB;
-
-# Now find 'clang'
-my $ClangSB = Cwd::realpath("$RealBin/bin/clang");
-if (!defined $ClangSB || ! -x $ClangSB) {
-  $ClangSB = Cwd::realpath("$RealBin/clang");
-}
-# Third, look for 'clang' in ../bin
-if (!defined $ClangSB || ! -x $ClangSB) {
-  $ClangSB = Cwd::realpath("$RealBin/../bin/clang");
-}
-# Finally, default to looking for 'clang-cc' in the path.
-if (!defined $ClangSB || ! -x $ClangSB) {
-  $ClangSB = "clang";
-}
-my $Clang = $ClangSB;
 
 
 my %AvailableAnalyses;
