@@ -2,15 +2,11 @@
 COMPONENT := foo
 # And the component type
 COMPONENT_TYPE := lib-static
-# Set the executable extension
-EXEEXT :=
-# And the library extension
-LIBEXT := .a
-# Define our target platform
-TARGET := linux
+# Component version
+COMPONENT_VERSION := 0.0.1
 
-# We're using a modern GCC, so can compile and generate dependencies together
-CC_CAN_BUILD_AND_DEP := yes
+# Tooling
+include build/makefiles/Makefile.tools
 
 # Grab the core makefile
 include build/makefiles/Makefile.top
