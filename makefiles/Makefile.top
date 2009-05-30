@@ -46,6 +46,7 @@
 # test			Build and run test suite, using current settings.
 # coverage		Determine test suite coverage (requires lcov)
 # profile		Build with profiling support enabled (requires gprof)
+# scan			Perform static analysis on sources (requires llvm)
 # docs			Produce documentation (requires doxygen)
 # clean			Clean the build
 # distclean		Remove distribution files, too
@@ -152,6 +153,13 @@ SOURCES :=
 # Include configuration Makefile fragment
 -include Makefile.config
 
+# If we're performing static analysis, then override CC
+ifeq ($(MAKECMDGOALS),scan)
+  # Need this in the environment
+  export CCC_CC := $(CC)
+  CC := build/llvm/ccc-analyzer
+endif
+
 # Set the default target (before including any children)
 __default: all
 
@@ -223,6 +231,9 @@ coverage: __precov test
 
 # Build for profiling
 profile: __partial_clean test
+
+# Perform static analysis
+scan: __partial_clean test
 
 # Compile documentation
 docs: $(BUILDDIR)/stamp
