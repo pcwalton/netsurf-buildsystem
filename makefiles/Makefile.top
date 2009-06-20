@@ -387,32 +387,50 @@ ifeq ($(CC_CAN_BUILD_AND_DEP),yes)
 
   endef
 else
-  # C compiler must calculate dependencies first, then compile (default)
+  ifeq ($(CC_CANNOT_DEP),yes)
+    # C compiler cannot calculate dependencies
 
-  define dep_c
-    ifeq ($$(findstring $$(BUILDDIR)/$2,$$(DEPFILES)),)
-      $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+    define dep_c
+    endef
+
+    define build_c
+      ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
+        $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
+	$$(Q)$$(CC) $$($3) -o $$@ -c $1
+
+        BUILDFILES += $$(BUILDDIR)/$2
+      endif
+
+    endef
+  else
+    # C compiler must calculate dependencies first, then compile (default)
+
+    define dep_c
+      ifeq ($$(findstring $$(BUILDDIR)/$2,$$(DEPFILES)),)
+        $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) "     DEP: $1"
 	$$(Q)$$(RM) $$(RMFLAGS) $($@)
 	$$(Q)$$(CC) $$($3) -MM $1 > $$@.tmp
 	$$(Q)$$(SED) $$(SEDFLAGS) 's,^.*:,$$@ $$(@:.d=.o):,' < $$@.tmp > $$@
 	$$(Q)$$(RM) $$@.tmp
 
-      DEPFILES += $$(BUILDDIR)/$2
-    endif
+        DEPFILES += $$(BUILDDIR)/$2
+      endif
 
-  endef
+    endef
 
-  define build_c
-    ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
-      $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+    define build_c
+      ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
+        $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
 	$$(Q)$$(CC) $$($3) -o $$@ -c $1
 
-      BUILDFILES += $$(BUILDDIR)/$2
-    endif
+        BUILDFILES += $$(BUILDDIR)/$2
+      endif
 
-  endef
+    endef
+  endif
 endif
 
 define build_cmhg

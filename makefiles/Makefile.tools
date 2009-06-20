@@ -125,14 +125,11 @@ ifeq ($(TARGET),beos)
     # No pkg-config
     PKGCONFIG ?=
 
-    GCCVER := 2
-
     # Default prefix
     PREFIX ?= /boot/home/config
   else
     ifeq ($(HOST),haiku)
       # Building on Haiku
-      GCCVER := 2
 
       # Default prefix
       PREFIX ?= /boot/common
@@ -249,16 +246,7 @@ ifeq ($(COMPONENT_TYPE),riscos-module)
 endif
 
 ###############################################################################
-# Other settings
-###############################################################################
-
-# If GCC can cope with simultaneous build & dep, do that as it's faster
-ifneq ($(GCCVER),2)
-  CC_CAN_BUILD_AND_DEP ?= yes
-endif
-
-###############################################################################
-# Finally, override defaulted tools
+# Override defaulted tools
 ###############################################################################
 
 # CC
@@ -287,5 +275,36 @@ ifeq ($(origin AR),default)
   ifdef AR__
     AR := $(AR__)
   endif
+endif
+
+###############################################################################
+# Other settings
+###############################################################################
+
+# Determine if the compiler is GCC and if it supports simultaneous build & dep.
+ccvsn := $(shell $(CC) --version)
+ifeq ($(ccvsn),)
+  # Version string is blank
+  ifeq ($(HOST),riscos)
+    # For some reason we never see the output of SCL apps, so assume Norcroft.
+    ccvsn := Norcroft
+  else
+    # Give up
+    $(error Failed to determine compiler and version)
+  endif
+endif
+
+# "<binary name> (GCC) x.y.z (foo bar baz)"
+ifeq ($(word 2,$(ccvsn)),(GCC))
+  # Looks like GCC, look for version
+  # If the major version (x, above) is not 2, then assume build & dep.
+  # This will break if using a version of GCC < 2, but that's unlikely.
+  GCCVER := $(word 1,$(subst ., ,$(word 3, $(ccvsn))))
+  ifneq ($(GCCVER),2)
+    CC_CAN_BUILD_AND_DEP ?= yes
+  endif
+else
+  # Not GCC -- assume inability to dep
+  CC_CANNOT_DEP ?= yes
 endif
 
