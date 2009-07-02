@@ -92,7 +92,6 @@ ifeq ($(TARGET),riscos)
     CC__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
     CMHG ?= PATH="$(GCCSDK_INSTALL_CROSSBIN):$(PATH)" $(GCCSDK_INSTALL_CROSSBIN)/cmunge
     GENHTML ?= echo
-    HOST_CC ?= cc
     LCOV ?= echo
     PKGCONFIG ?= $(GCCSDK_INSTALL_ENV)/ro-pkg-config
 
@@ -137,6 +136,27 @@ ifeq ($(TARGET),beos)
       $(error Cross-compiling for BeOS is not supported)
     endif
   endif
+endif
+
+# Windows
+ifeq ($(TARGET),windows)
+  ifeq ($(HOST),windows)
+    $(error Compiling on Windows is not supported)
+  else
+    # Cross compiling for Windows -- assumes mingw toolchain
+    GCCSDK_INSTALL_ENV ?= /usr/local/mingw
+
+    CC__ := i586-mingw32msvc-gcc
+    AR__ := i586-mingw32msvc-ar
+
+    PKGCONFIG ?= $(GCCSDK_INSTALL_ENV)/bin/win-pkg-config
+  endif
+
+  CFLAGS := $(CFLAGS) -I$(GCCSDK_INSTALL_ENV)/include
+  LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
+
+  # Default prefix
+  PREFIX ?= $(GCCSDK_INSTALL_ENV)
 endif
 
 ###############################################################################
@@ -191,7 +211,7 @@ ifeq ($(origin ARFLAGS),default)
   ARFLAGS := cru
 endif
 
-CFLAGS := $(CFLAGS) $(OPTCFLAGS)
+CFLAGS := $(CFLAGS) $(OPTCFLAGS) -DBUILD_TARGET_$(TARGET) -DBUILD_HOST_$(HOST)
 LDFLAGS := $(LDFLAGS) $(OPTLDFLAGS)
 
 # Extensions for coverage target
