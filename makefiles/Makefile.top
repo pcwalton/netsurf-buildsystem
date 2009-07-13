@@ -317,7 +317,7 @@ endef
 define uninstall_file
   $(if $1, \
     $(if $(findstring .pc.in,$1), \
-      $(RM) $(RMFLAGS) $2/$(1:.pc.in=)-$(major-version).pc, \
+      $(RM) $(RMFLAGS) $2/$(1:.pc.in=.pc), \
       $(if $(and $(filter lib-shared,$(COMPONENT_TYPE)), \
 		$(filter $(OUTPUT),$1)), \
 	$(call uninstall_shared_lib,$1,$2), \
