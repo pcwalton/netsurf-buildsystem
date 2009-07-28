@@ -197,7 +197,7 @@ TOUCH ?= touch
 XSLTPROC ?= xsltproc
 
 ###############################################################################
-# Default compiler/linker/archiver flags
+# Default assembler/compiler/linker/archiver flags
 ###############################################################################
 
 ifeq ($(BUILD),release)
@@ -211,7 +211,10 @@ ifeq ($(origin ARFLAGS),default)
   ARFLAGS := cru
 endif
 
+ASFLAGS ?= -xassembler-with-cpp
+
 CFLAGS := $(CFLAGS) $(OPTCFLAGS) -DBUILD_TARGET_$(TARGET) -DBUILD_HOST_$(HOST)
+ASFLAGS := $(ASFLAGS) $(CFLAGS)
 LDFLAGS := $(LDFLAGS) $(OPTLDFLAGS)
 
 # Extensions for coverage target

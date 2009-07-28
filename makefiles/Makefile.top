@@ -168,7 +168,8 @@ $(eval $(foreach INC, $(MAKE_INCLUDES), $(call do_include,$(INC))))
 # Calculate objects to build
 OBJECTS := $(addprefix $(BUILDDIR)/,$(filter %.o, \
 		$(subst /,_,$(subst .c,.o,$(SOURCES))) \
-		$(subst /,_,$(subst .cmhg,.o,$(SOURCES)))))
+		$(subst /,_,$(subst .cmhg,.o,$(SOURCES))) \
+		$(subst /,_,$(subst .s,.o,$(SOURCES)))))
 
 bin_for_test = $(addprefix $(BUILDDIR)/,$(firstword $(subst :, ,$(ITEM))))
 TEST_BINARIES := $(foreach ITEM,$(TEST_ITEMS),$(bin_for_test))
@@ -444,7 +445,18 @@ define build_cmhg
 
 endef
 
+define build_s
+  ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
+    $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+	$$(VQ)$$(ECHO) $$(ECHOFLAGS) "ASSEMBLE: $1"
+	$$(Q)$$(CC) $$($3) $1 -c -o $$@
+    BUILDFILES += $$(BUILDDIR)/$2
+  endif
+
+endef
+
 BUILDCFLAGS = $(CFLAGS) $(SHAREDCFLAGS)
+BUILDASFLAGS = $(ASFLAGS) $(SHAREDCFLAGS)
 
 # Generate dependency rules
 $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
@@ -456,6 +468,9 @@ $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
 
 $(eval $(foreach SOURCE,$(filter %.cmhg,$(SOURCES)), \
 	$(call build_cmhg,$(SOURCE),$(subst /,_,$(SOURCE:.cmhg=.o)))))
+
+$(eval $(foreach SOURCE,$(filter %.s,$(SOURCES)), \
+	$(call build_s,$(SOURCE),$(subst /,_,$(SOURCE:.s=.o)),BUILDASFLAGS)))
 
 # Similarly for test sources
 ifeq ($(WANT_TEST),yes)
