@@ -327,7 +327,16 @@ ifeq ($(word 2,$(ccvsn)),(GCC))
     CC_CAN_BUILD_AND_DEP ?= yes
   endif
 else
-  # Not GCC -- assume inability to dep
-  CC_CANNOT_DEP ?= yes
+  # Older versions of GCC just output the version number, so examine the 
+  # binary name in the hope of detecting more GCC.
+  ifeq ($(findstring gcc,$(CC)),gcc)
+    GCCVER := $(word 1,$(subst ., ,$(ccvsn)))
+    ifneq ($(GCCVER),2)
+      CC_CAN_BUILD_AND_DEP ?= yes
+    endif
+  else
+    # Not GCC -- assume inability to dep
+    CC_CANNOT_DEP ?= yes
+  endif
 endif
 
