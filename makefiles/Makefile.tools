@@ -74,7 +74,7 @@ ifeq ($(TARGET),riscos)
     CC__ := gcc
     CMHG ?= cmunge
     GENHTML ?= echo
-    INSTALL ?= echo
+    INSTALL ?= install
     LCOV ?= echo
     PKGCONFIG ?=
 
