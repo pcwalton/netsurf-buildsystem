@@ -13,7 +13,8 @@
 # BUILD			Type of build to perform:
 # 				release		-	Release build (default)
 # 				debug		-	Debug build
-# OPTCFLAGS		Optional compiler flags for $(BUILD)
+# OPTCFLAGS		Optional C compiler flags for $(BUILD)
+# OPTCXXFLAGS		Optional C++ compiler flags for $(BUILD)
 # OPTLDFLAGS		Optional linker flags for $(BUILD)
 # TARGET		Target platform (defaults to host)
 #
@@ -72,6 +73,7 @@ ifeq ($(TARGET),riscos)
     GCCSDK_INSTALL_ENV ?= <NSLibs$$Dir>
 
     CC__ := gcc
+    CXX__ := g++
     CMHG ?= cmunge
     GENHTML ?= echo
     LCOV ?= echo
@@ -89,6 +91,7 @@ ifeq ($(TARGET),riscos)
 
     AR__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*ar)
     CC__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
+    CXX__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN/*g++)
     CMHG ?= PATH="$(GCCSDK_INSTALL_CROSSBIN):$(PATH)" $(GCCSDK_INSTALL_CROSSBIN)/cmunge
     GENHTML ?= echo
     LCOV ?= echo
@@ -106,6 +109,7 @@ ifeq ($(TARGET),riscos)
   endif
 
   CFLAGS := $(CFLAGS) -mpoke-function-name -I$(GCCSDK_INSTALL_ENV)/include
+  CXXFLAGS := $(CXXFLAGS) -mpoke-function-name -I$(GCCSDK_INSTALL_ENV)/include
   LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
 
   CMHGFLAGS := -p -tgcc -32bit -apcs 3/32/nonreent/fpe2/noswst/nofpr/nofp
@@ -146,12 +150,14 @@ ifeq ($(TARGET),windows)
     GCCSDK_INSTALL_ENV ?= /usr/local/mingw
 
     CC__ := i586-mingw32msvc-gcc
+    CXX__ := i586-mingw32msvc-g++
     AR__ := i586-mingw32msvc-ar
 
     PKGCONFIG ?= $(GCCSDK_INSTALL_ENV)/bin/win-pkg-config
   endif
 
   CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
+  CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
   LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
 
   # Default prefix
@@ -171,6 +177,8 @@ ECHO ?= echo
 GENHTML ?= genhtml
 
 HOST_CC ?= $(CC)
+
+HOST_CXX ?= $(CXX)
 
 INSTALL ?= install
 
@@ -201,8 +209,10 @@ XSLTPROC ?= xsltproc
 
 ifeq ($(BUILD),release)
   OPTCFLAGS ?= -DNDEBUG -O2
+  OPTCXXFLAGS ?= -DNDEBUG -O2
 else
   OPTCFLAGS ?= -g -O0
+  OPTCXXFLAGS ?= -g -O0
   OPTLDFLAGS ?= -g
 endif
 
@@ -213,9 +223,12 @@ endif
 ASFLAGS ?= -xassembler-with-cpp
 
 CFLAGS := $(CFLAGS) $(OPTCFLAGS) 
+CXXFLAGS := $(CXXFLAGS) $(OPTCXXFLAGS)
 # Some attempt to sanitise TARGET and HOST when used as pre-defines
 CFLAGS := $(CFLAGS) -DBUILD_TARGET_$(subst .,_,$(subst -,_,$(TARGET)))
+CXXFLAGS := $(CXXFLAGS) -DBUILD_TARGET_$(subst .,_,$(subst -,_,$(TARGET)))
 CFLAGS := $(CFLAGS) -DBUILD_HOST_$(subst .,_,$(subst -,_,$(HOST)))
+CXXFLAGS := $(CXXFLAGS) -DBUILD_HOST_$(subst .,_,$(subst -,_,$(HOST)))
 
 ASFLAGS := $(ASFLAGS) $(CFLAGS)
 LDFLAGS := $(LDFLAGS) $(OPTLDFLAGS)
@@ -223,18 +236,22 @@ LDFLAGS := $(LDFLAGS) $(OPTLDFLAGS)
 # Extensions for coverage target
 ifeq ($(MAKECMDGOALS),coverage)
   COVCFLAGS ?= -fprofile-arcs -ftest-coverage
+  COVCXXFLAGS ?= -fprofile-arcs -ftest-coverage
   COVLDFLAGS ?= -lgcov
 
   CFLAGS := $(CFLAGS) $(COVCFLAGS)
+  CXXFLAGS := $(CXXFLAGS) $(COVCXXFLAGS)
   LDFLAGS := $(LDFLAGS) $(COVLDFLAGS)
 endif
 
 # Extensions for profile target
 ifeq ($(MAKECMDGOALS),profile)
   PROFCFLAGS ?= -pg
+  PROFCXXFLAGS ?= -pg
   PROFLDFLAGS ?= -pg
 
   CFLAGS := $(CFLAGS) $(PROFCFLAGS)
+  CXXFLAGS := $(CXXFLAGS) $(PROFCXXFLAGS)
   LDFLAGS := $(LDFLAGS) $(PROFLDFLAGS)
 endif
 
@@ -253,6 +270,7 @@ endif
 ifeq ($(COMPONENT_TYPE),lib-shared)
   # Default CFLAGS/LDFLAGS for shared libraries
   SHAREDCFLAGS ?= -fPIC -DPIC
+  SHAREDCXXFLAGS ?= -fPIC -DPIC
   SHAREDLDFLAGS ?= -shared \
 	-Wl,-soname,$(SONAME)
   SHAREDLDPATH ?= LD_LIBRARY_PATH="$(BUILDDIR):$(LD_LIBRARY_PATH)"
@@ -268,6 +286,7 @@ ifeq ($(COMPONENT_TYPE),riscos-module)
   endif
 
   CFLAGS := $(CFLAGS) -mmodule
+  CXXFLAGS := $(CXXFLAGS) -mmodule
   LDFLAGS := $(LDFLAGS) -mmodule
 endif
 
@@ -293,6 +312,13 @@ else
     ifdef CC__
       CC := $(CC__)
     endif
+  endif
+endif
+
+# CXX
+ifeq ($(origin CXX),default)
+  ifdef CXX__
+    CXX := $(CXX__)
   endif
 endif
 

@@ -31,9 +31,11 @@
 #
 # ARFLAGS		Archiver flags for the current compilation
 # CFLAGS		C compiler flags for the current compilation
+# CXXFLAGS		C++ compiler flags for the current compilation
 # LDFLAGS		Linker flags for the current compilation
 #
 # TESTCFLAGS		Any test-specific CFLAGS
+# TESTCXXFLAGS		Any test-specific CXXFLAGS
 # TESTLDFLAGS		Any test-specific LDFLAGS
 #
 # TESTRUNNER		Test runner invocation command
@@ -168,11 +170,19 @@ $(eval $(foreach INC, $(MAKE_INCLUDES), $(call do_include,$(INC))))
 # Calculate objects to build
 OBJECTS := $(addprefix $(BUILDDIR)/,$(filter %.o, \
 		$(subst /,_,$(subst .c,.o,$(SOURCES))) \
+		$(subst /,_,$(subst .cpp,.o,$(SOURCES))) \
 		$(subst /,_,$(subst .cmhg,.o,$(SOURCES))) \
 		$(subst /,_,$(subst .s,.o,$(SOURCES)))))
 
 bin_for_test = $(addprefix $(BUILDDIR)/,$(firstword $(subst :, ,$(ITEM))))
 TEST_BINARIES := $(foreach ITEM,$(TEST_ITEMS),$(bin_for_test))
+
+# Determine if we're building any C++ sources
+ifneq ($(filter %.cpp,$(SOURCES)),)
+  CXX_IN_BUILD := yes
+else
+  CXX_IN_BUILD := no
+endif
 
 # Determine the output filename
 ifeq ($(findstring lib,$(COMPONENT_TYPE)),lib)
@@ -355,7 +365,11 @@ ifeq ($(COMPONENT_TYPE),lib-static)
 	$(Q)$(AR) $(ARFLAGS) $@ $(OBJECTS)
 else
 	$(VQ)$(ECHO) $(ECHOFLAGS) "    LINK: $@"
+  ifeq ($(CXX_IN_BUILD),yes)
+	$(Q)$(CXX) -o $@ $(OBJECTS) $(LDFLAGS) $(SHAREDLDFLAGS)
+  else
 	$(Q)$(CC) -o $@ $(OBJECTS) $(LDFLAGS) $(SHAREDLDFLAGS)
+  endif
 endif
 
 ###############################################################################
@@ -377,11 +391,31 @@ ifeq ($(CC_CAN_BUILD_AND_DEP),yes)
 
   endef
 
+  define dep_cxx
+    ifeq ($$(findstring $$(BUILDDIR)/$2,$$(DEPFILES)),)
+      $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+
+      DEPFILES += $$(BUILDDIR)/$2
+    endif
+
+  endef
+
   define build_c
     ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
       $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
 	$$(Q)$$(CC) -MMD -MP $$($3) -o $$@ -c $1
+
+      BUILDFILES += $$(BUILDDIR)/$2
+    endif
+
+  endef
+
+  define build_cxx
+    ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
+      $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
+	$$(Q)$$(CXX) -MMD -MP $$($3) -o $$@ -c $1
 
       BUILDFILES += $$(BUILDDIR)/$2
     endif
@@ -394,11 +428,25 @@ else
     define dep_c
     endef
 
+    define dep_cxx
+    endef
+
     define build_c
       ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
         $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
 	$$(Q)$$(CC) $$($3) -o $$@ -c $1
+
+        BUILDFILES += $$(BUILDDIR)/$2
+      endif
+
+    endef
+
+    define build_cxx
+      ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
+        $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
+	$$(Q)$$(CXX) $$($3) -o $$@ -c $1
 
         BUILDFILES += $$(BUILDDIR)/$2
       endif
@@ -421,11 +469,36 @@ else
 
     endef
 
+    define dep_cxx
+      ifeq ($$(findstring $$(BUILDDIR)/$2,$$(DEPFILES)),)
+        $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+	$$(VQ)$$(ECHO) $$(ECHOFLAGS) "     DEP: $1"
+	$$(Q)$$(RM) $$(RMFLAGS) $($@)
+	$$(Q)$$(CXX) $$($3) -MM $1 > $$@.tmp
+	$$(Q)$$(SED) $$(SEDFLAGS) 's,^.*:,$$@ $$(@:.d=.o):,' < $$@.tmp > $$@
+	$$(Q)$$(RM) $$@.tmp
+
+        DEPFILES += $$(BUILDDIR)/$2
+      endif
+
+    endef
+
     define build_c
       ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
         $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
 	$$(Q)$$(CC) $$($3) -o $$@ -c $1
+
+        BUILDFILES += $$(BUILDDIR)/$2
+      endif
+
+    endef
+
+    define build_cxx
+      ifeq ($$(findstring $$(BUILDDIR)/$2,$$(BUILDFILES)),)
+        $$(BUILDDIR)/$2: $$(BUILDDIR)/stamp $1
+	$$(VQ)$$(ECHO) $$(ECHOFLAGS) " COMPILE: $1"
+	$$(Q)$$(CXX) $$($3) -o $$@ -c $1
 
         BUILDFILES += $$(BUILDDIR)/$2
       endif
@@ -456,15 +529,21 @@ define build_s
 endef
 
 BUILDCFLAGS = $(CFLAGS) $(SHAREDCFLAGS)
+BUILDCXXFLAGS = $(CXXFLAGS) $(SHAREDCXXFLAGS)
 BUILDASFLAGS = $(ASFLAGS) $(SHAREDCFLAGS)
 
 # Generate dependency rules
 $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
 	$(call dep_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.d)),BUILDCFLAGS)))
+$(eval $(foreach SOURCE,$(filter %.cpp,$(SOURCES)), \
+	$(call dep_cxx,$(SOURCE),$(subst /,_,$(SOURCE:.cpp=.d)),BUILDCXXFLAGS)))
 
 # Generate compilation rules
 $(eval $(foreach SOURCE,$(filter %.c,$(SOURCES)), \
 	$(call build_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.o)),BUILDCFLAGS)))
+
+$(eval $(foreach SOURCE,$(filter %.cpp,$(SOURCES)), \
+	$(call build_cxx,$(SOURCE),$(subst /,_,$(SOURCE:.cpp=.o)),BUILDCXXFLAGS)))
 
 $(eval $(foreach SOURCE,$(filter %.cmhg,$(SOURCES)), \
 	$(call build_cmhg,$(SOURCE),$(subst /,_,$(SOURCE:.cmhg=.o)))))
@@ -480,12 +559,17 @@ ifeq ($(WANT_TEST),yes)
   endif
 
   TESTCFLAGS += $(CFLAGS)
+  TESTCXXFLAGS += $(CXXFLAGS)
   TESTLDFLAGS += $(LDFLAGS)
 
   define link_test
     $2: $($3) $1
 	$$(VQ)$$(ECHO) $$(ECHOFLAGS) "    LINK: $2"
+      ifeq ($$(CXX_IN_BUILD),yes)
+	$$(Q)$$(CXX) -o $$@ $1 $$($4)
+      else
 	$$(Q)$$(CC) -o $$@ $1 $$($4)
+      endif
 
   endef
 
@@ -498,8 +582,16 @@ ifeq ($(WANT_TEST),yes)
 	$(call dep_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.d)),TESTCFLAGS))))
 
   $(eval $(foreach ITEM,$(TEST_ITEMS), \
+	$(foreach SOURCE,$(filter %.cpp,$(srcs_for_test)), \
+	$(call dep_cxx,$(SOURCE),$(subst /,_,$(SOURCE:.cpp=.d)),TESTCXXFLAGS))))
+
+  $(eval $(foreach ITEM,$(TEST_ITEMS), \
 	$(foreach SOURCE,$(filter %.c,$(srcs_for_test)), \
 	$(call build_c,$(SOURCE),$(subst /,_,$(SOURCE:.c=.o)),TESTCFLAGS))))
+
+  $(eval $(foreach ITEM,$(TEST_ITEMS), \
+	$(foreach SOURCE,$(filter %.cpp,$(srcs_for_test)), \
+	$(call build_cxx,$(SOURCE),$(subst /,_,$(SOURCE:.cpp=.o)),TESTCXXFLAGS))))
 
   $(eval $(foreach ITEM,$(TEST_ITEMS), \
 	$(call link_test,$(objs_for_test),$(bin_for_test),TESTLIB,TESTLDFLAGS)))
