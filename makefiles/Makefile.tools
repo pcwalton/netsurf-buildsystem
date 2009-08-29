@@ -91,7 +91,7 @@ ifeq ($(TARGET),riscos)
 
     AR__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*ar)
     CC__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
-    CXX__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN/*g++)
+    CXX__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*g++)
     CMHG ?= PATH="$(GCCSDK_INSTALL_CROSSBIN):$(PATH)" $(GCCSDK_INSTALL_CROSSBIN)/cmunge
     GENHTML ?= echo
     LCOV ?= echo
