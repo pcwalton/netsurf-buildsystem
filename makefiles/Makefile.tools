@@ -184,9 +184,15 @@ ECHO ?= echo
 
 GENHTML ?= genhtml
 
-HOST_CC ?= cc
+ifeq ($(HOST),$(TARGET))
+  HOST_CC ?= $(CC)
 
-HOST_CXX ?= c++
+  HOST_CXX ?= $(CXX)
+else
+  HOST_CC ?= cc
+
+  HOST_CXX ?= c++
+endif
 
 INSTALL ?= install
 
