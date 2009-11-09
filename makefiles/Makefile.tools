@@ -98,10 +98,18 @@ ifeq ($(TARGET),riscos)
     PKGCONFIG ?= $(GCCSDK_INSTALL_ENV)/ro-pkg-config
 
     ifneq ($(COMPONENT_TYPE),riscos-module)
-      ifneq ($(findstring arm-unknown-riscos-gcc,$(CC)),)
-        EXEEXT := ,e1f
+      ifeq ($(origin CC),default)
+        ifneq ($(findstring arm-unknown-riscos-gcc,$(CC__)),)
+          EXEEXT := ,e1f
+        else
+          EXEEXT := ,ff8
+        endif
       else
-        EXEEXT := ,ff8
+        ifneq ($(findstring arm-unknown-riscos-gcc,$(CC)),)
+          EXEEXT := ,e1f
+        else
+          EXEEXT := ,ff8
+        endif
       endif
     else
       EXEEXT := ,ffa
@@ -176,9 +184,9 @@ ECHO ?= echo
 
 GENHTML ?= genhtml
 
-HOST_CC ?= $(CC)
+HOST_CC ?= cc
 
-HOST_CXX ?= $(CXX)
+HOST_CXX ?= c++
 
 INSTALL ?= install
 
