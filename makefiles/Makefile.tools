@@ -36,7 +36,12 @@ endif
 # Host/target platform detection
 ###############################################################################
 
-HOST := $(shell uname -s)
+# Autodetect host if necessary
+ifeq ($(HOST),)
+  HOST := $(shell uname -s)
+endif
+
+# Simple host sanitisation
 ifeq ($(HOST),)
   # Don't ask
   HOST := riscos
@@ -65,6 +70,11 @@ ifeq ($(TARGET),)
     TARGET := beos
   endif
 endif
+
+# Sanitise HOST and TARGET
+# TODO: Ideally, we want the equivalent of s/[^A-Za-z0-9]/_/g here
+HOST := $(subst .,_,$(subst -,_,$(subst /,_,$(HOST))))
+TARGET := $(subst .,_,$(subst -,_,$(subst /,_,$(TARGET))))
 
 # Now setup our tooling
 ifeq ($(TARGET),riscos)
@@ -236,13 +246,9 @@ endif
 
 ASFLAGS ?= -xassembler-with-cpp
 
-CFLAGS := $(CFLAGS) $(OPTCFLAGS) 
-CXXFLAGS := $(CXXFLAGS) $(OPTCXXFLAGS)
-# Some attempt to sanitise TARGET and HOST when used as pre-defines
-CFLAGS := $(CFLAGS) -DBUILD_TARGET_$(subst .,_,$(subst -,_,$(TARGET)))
-CXXFLAGS := $(CXXFLAGS) -DBUILD_TARGET_$(subst .,_,$(subst -,_,$(TARGET)))
-CFLAGS := $(CFLAGS) -DBUILD_HOST_$(subst .,_,$(subst -,_,$(HOST)))
-CXXFLAGS := $(CXXFLAGS) -DBUILD_HOST_$(subst .,_,$(subst -,_,$(HOST)))
+CFLAGS := $(CFLAGS) $(OPTCFLAGS) -DBUILD_TARGET_$(TARGET) -DBUILD_HOST_$(HOST)
+CXXFLAGS := $(CXXFLAGS) $(OPTCXXFLAGS) \
+		-DBUILD_TARGET_$(TARGET) -DBUILD_HOST_$(HOST)
 
 ASFLAGS := $(ASFLAGS) $(CFLAGS)
 LDFLAGS := $(LDFLAGS) $(OPTLDFLAGS)
