@@ -158,12 +158,11 @@ ifeq ($(TARGET),beos)
       BEOS_INSTALL_ENV ?= /home/jmb/haiku/env
       BEOS_INSTALL_CROSSBIN ?= /home/jmb/haiku/haiku/generated/cross-tools/bin
 
-      CC__ := $(wildcard BEOS_INSTALL_CROSSBIN/*gcc)
-      CXX__ := $(wildcard BEOS_INSTALL_CROSSBIN/*g++)
-      AR__ := $(wildcard BEOS_INSTALL_CROSSBIN/*ar)
+      CC__ := $(wildcard $(BEOS_INSTALL_CROSSBIN)/*gcc)
+      CXX__ := $(wildcard $(BEOS_INSTALL_CROSSBIN)/*g++)
+      AR__ := $(wildcard $(BEOS_INSTALL_CROSSBIN)/*ar)
 
-      # TODO: can we avoid the need for this by setting PKG_CONFIG_LIBDIR here?
-      PKGCONFIG := $(BEOS_INSTALL_ENV)/bin/beos-pkg-config
+      PKGCONFIG := PKG_CONFIG_LIBDIR="$(BEOS_INSTALL_ENV)/lib/pkgconfig:$(BEOS_INSTALL_ENV)/share/pkgconfig" pkg-config
     endif
   endif
 
