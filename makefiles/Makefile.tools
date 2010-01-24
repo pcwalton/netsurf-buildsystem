@@ -165,21 +165,21 @@ ifeq ($(TARGET),windows)
     $(error Compiling on Windows is not supported)
   else
     # Cross compiling for Windows -- assumes mingw toolchain
-    GCCSDK_INSTALL_ENV ?= /usr/local/mingw
+    MINGW_INSTALL_ENV ?= /usr/local/mingw
 
     CC__ := i586-mingw32msvc-gcc
     CXX__ := i586-mingw32msvc-g++
     AR__ := i586-mingw32msvc-ar
 
-    PKGCONFIG ?= $(GCCSDK_INSTALL_ENV)/bin/win-pkg-config
+    PKGCONFIG ?= $(MINGW_INSTALL_ENV)/bin/win-pkg-config
   endif
 
-  CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
-  CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
-  LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
+  CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(MINGW_INSTALL_ENV)/include
+  CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(MINGW_INSTALL_ENV)/include
+  LDFLAGS := $(LDFLAGS) -L$(MINGW_INSTALL_ENV)/lib
 
   # Default prefix
-  PREFIX ?= $(GCCSDK_INSTALL_ENV)
+  PREFIX ?= $(MINGW_INSTALL_ENV)
 endif
 
 ###############################################################################
