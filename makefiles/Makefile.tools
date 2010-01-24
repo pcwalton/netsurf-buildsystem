@@ -185,7 +185,7 @@ ifeq ($(TARGET),windows)
     CXX__ := i586-mingw32msvc-g++
     AR__ := i586-mingw32msvc-ar
 
-    PKGCONFIG ?= $(MINGW_INSTALL_ENV)/bin/win-pkg-config
+    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(MINGW_INSTALL_ENV)/lib/pkgconfig" pkg-config
   endif
 
   CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(MINGW_INSTALL_ENV)/include
