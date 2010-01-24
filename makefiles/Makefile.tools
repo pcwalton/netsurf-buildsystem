@@ -146,17 +146,32 @@ ifeq ($(TARGET),beos)
     PKGCONFIG ?=
 
     # Default prefix
-    PREFIX ?= /boot/home/config
+    BEOS_INSTALL_ENV ?= /boot/home/config
   else
     ifeq ($(HOST),haiku)
       # Building on Haiku
 
       # Default prefix
-      PREFIX ?= /boot/common
+      BEOS_INSTALL_ENV ?= /boot/common
     else
-      $(error Cross-compiling for BeOS is not supported)
+      # TODO: more sensible default
+      BEOS_INSTALL_ENV ?= /home/jmb/haiku/env
+      BEOS_INSTALL_CROSSBIN ?= /home/jmb/haiku/haiku/generated/cross-tools/bin
+
+      CC__ := $(wildcard BEOS_INSTALL_CROSSBIN/*gcc)
+      CXX__ := $(wildcard BEOS_INSTALL_CROSSBIN/*g++)
+      AR__ := $(wildcard BEOS_INSTALL_CROSSBIN/*ar)
+
+      # TODO: can we avoid the need for this by setting PKG_CONFIG_LIBDIR here?
+      PKGCONFIG := $(BEOS_INSTALL_ENV)/bin/beos-pkg-config
     endif
   endif
+
+  CFLAGS := $(CFLAGS) -I$(BEOS_INSTALL_ENV)/include
+  CXXFLAGS := $(CXXFLAGS) -I$(BEOS_INSTALL_ENV)/include
+  LDFLAGS := $(LDFLAGS) -L$(BEOS_INSTALL_ENV)/lib
+
+  PREFIX ?= $(BEOS_INSTALL_ENV)
 endif
 
 # Windows
