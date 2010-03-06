@@ -126,6 +126,7 @@ ifeq ($(TARGET),riscos)
     endif
   endif
 
+  # TODO: this assumes GCC
   CFLAGS := $(CFLAGS) -mpoke-function-name -I$(GCCSDK_INSTALL_ENV)/include
   CXXFLAGS := $(CXXFLAGS) -mpoke-function-name -I$(GCCSDK_INSTALL_ENV)/include
   LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
@@ -166,6 +167,7 @@ ifeq ($(TARGET),beos)
     endif
   endif
 
+  # TODO: this assumes GCC
   CFLAGS := $(CFLAGS) -I$(BEOS_INSTALL_ENV)/include
   CXXFLAGS := $(CXXFLAGS) -I$(BEOS_INSTALL_ENV)/include
   LDFLAGS := $(LDFLAGS) -L$(BEOS_INSTALL_ENV)/lib
@@ -188,6 +190,7 @@ ifeq ($(TARGET),windows)
     PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(MINGW_INSTALL_ENV)/lib/pkgconfig" pkg-config
   endif
 
+  # TODO: this assumes GCC
   CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(MINGW_INSTALL_ENV)/include
   CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(MINGW_INSTALL_ENV)/include
   LDFLAGS := $(LDFLAGS) -L$(MINGW_INSTALL_ENV)/lib
@@ -242,88 +245,6 @@ TOUCH ?= touch
 XSLTPROC ?= xsltproc
 
 ###############################################################################
-# Default assembler/compiler/linker/archiver flags
-###############################################################################
-
-ifeq ($(BUILD),release)
-  OPTCFLAGS ?= -DNDEBUG -O2
-  OPTCXXFLAGS ?= -DNDEBUG -O2
-else
-  OPTCFLAGS ?= -g -O0
-  OPTCXXFLAGS ?= -g -O0
-  OPTLDFLAGS ?= -g
-endif
-
-ifeq ($(origin ARFLAGS),default)
-  ARFLAGS := cru
-endif
-
-ASFLAGS ?= -xassembler-with-cpp
-
-CFLAGS := $(CFLAGS) $(OPTCFLAGS) -DBUILD_TARGET_$(TARGET) -DBUILD_HOST_$(HOST)
-CXXFLAGS := $(CXXFLAGS) $(OPTCXXFLAGS) \
-		-DBUILD_TARGET_$(TARGET) -DBUILD_HOST_$(HOST)
-
-ASFLAGS := $(ASFLAGS) $(CFLAGS)
-LDFLAGS := $(LDFLAGS) $(OPTLDFLAGS)
-
-# Extensions for coverage target
-ifeq ($(MAKECMDGOALS),coverage)
-  COVCFLAGS ?= -fprofile-arcs -ftest-coverage
-  COVCXXFLAGS ?= -fprofile-arcs -ftest-coverage
-  COVLDFLAGS ?= -lgcov
-
-  CFLAGS := $(CFLAGS) $(COVCFLAGS)
-  CXXFLAGS := $(CXXFLAGS) $(COVCXXFLAGS)
-  LDFLAGS := $(LDFLAGS) $(COVLDFLAGS)
-endif
-
-# Extensions for profile target
-ifeq ($(MAKECMDGOALS),profile)
-  PROFCFLAGS ?= -pg
-  PROFCXXFLAGS ?= -pg
-  PROFLDFLAGS ?= -pg
-
-  CFLAGS := $(CFLAGS) $(PROFCFLAGS)
-  CXXFLAGS := $(CXXFLAGS) $(PROFCXXFLAGS)
-  LDFLAGS := $(LDFLAGS) $(PROFLDFLAGS)
-endif
-
-###############################################################################
-# lib-shared defaults
-###############################################################################
-
-# Default library extension
-ifeq ($(COMPONENT_TYPE),lib-static)
-  LIBEXT ?= .a
-else
-  LIBEXT ?= .so
-endif
-
-# If we're building a shared library, modify the flags appropriately
-ifeq ($(COMPONENT_TYPE),lib-shared)
-  # Default CFLAGS/LDFLAGS for shared libraries
-  SHAREDCFLAGS ?= -fPIC -DPIC
-  SHAREDCXXFLAGS ?= -fPIC -DPIC
-  SHAREDLDFLAGS ?= -shared -Wl,-soname,$(SONAME)
-  SHAREDLDPATH ?= LD_LIBRARY_PATH="$(BUILDDIR):$(LD_LIBRARY_PATH)"
-endif
-
-###############################################################################
-# RISC OS module extensions
-###############################################################################
-
-ifeq ($(COMPONENT_TYPE),riscos-module)
-  ifneq ($(TARGET),riscos)
-    $(error Attempting to build a RISC OS module for a non-RISC OS target)
-  endif
-
-  CFLAGS := $(CFLAGS) -mmodule
-  CXXFLAGS := $(CXXFLAGS) -mmodule
-  LDFLAGS := $(LDFLAGS) -mmodule
-endif
-
-###############################################################################
 # Override defaulted tools
 ###############################################################################
 
@@ -363,42 +284,85 @@ ifeq ($(origin AR),default)
 endif
 
 ###############################################################################
-# Other settings
+# Auto-detect the toolchain
 ###############################################################################
 
-# Determine if the compiler is GCC and if it supports simultaneous build & dep.
-ccvsn := $(shell $(CC) --version)
+# TODO: Using shell redirection like this probably hurts portability
+ccvsn := $(shell $(CC) --version 2>&1)
 ifeq ($(ccvsn),)
   # Version string is blank
   ifeq ($(HOST),riscos)
     # For some reason we never see the output of SCL apps, so assume Norcroft.
     ccvsn := Norcroft
-  else
-    # Give up
-    $(error Failed to determine compiler and version)
   endif
 endif
 
 # "<binary name> (GCC) x.y.z (foo bar baz)"
 ifeq ($(word 2,$(ccvsn)),(GCC))
-  # Looks like GCC, look for version
-  # If the major version (x, above) is not 2, then assume build & dep.
-  # This will break if using a version of GCC < 2, but that's unlikely.
-  GCCVER := $(word 1,$(subst ., ,$(word 3, $(ccvsn))))
-  ifneq ($(GCCVER),2)
-    CC_CAN_BUILD_AND_DEP ?= yes
-  endif
+  toolchain := gcc
 else
   # Older versions of GCC just output the version number, so examine the 
   # binary name in the hope of detecting more GCC.
   ifeq ($(findstring gcc,$(CC)),gcc)
-    GCCVER := $(word 1,$(subst ., ,$(ccvsn)))
-    ifneq ($(GCCVER),2)
-      CC_CAN_BUILD_AND_DEP ?= yes
-    endif
-  else
-    # Not GCC -- assume inability to dep
-    CC_CANNOT_DEP ?= yes
+    toolchain := gcc
   endif
+endif
+# "Norcroft ..."
+ifeq ($(word 1,$(ccvsn)),Norcroft)
+  toolchain := norcroft
+endif
+
+ifeq ($(toolchain),)
+  $(error Unable to detect toolchain)
+endif
+
+# TODO: It would be nice to avoid this hard-coded path
+include build/makefiles/Makefile.$(toolchain)
+
+###############################################################################
+# Default assembler/compiler/linker/archiver flags
+###############################################################################
+
+ifeq ($(BUILD),release)
+  OPTCFLAGS ?= $(CCDEF)NDEBUG $(CCOPT)
+  OPTCXXFLAGS ?= $(CXXDEF)NDEBUG $(CXXOPT)
+else
+  OPTCFLAGS ?= $(CCDBG) $(CCNOOPT)
+  OPTCXXFLAGS ?= $(CXXDBG) $(CXXNOOPT)
+  OPTLDFLAGS ?= $(LDDBG)
+endif
+
+ifeq ($(origin ARFLAGS),default)
+  ARFLAGS := $(ARFLG)
+endif
+
+# TODO: This assumes that the C compiler can cope with assembler
+ASFLAGS ?= $(CCAS)
+
+CFLAGS := $(CFLAGS) $(OPTCFLAGS) $(CCDEF)BUILD_TARGET_$(TARGET) $(CCDEF)BUILD_HOST_$(HOST)
+CXXFLAGS := $(CXXFLAGS) $(OPTCXXFLAGS) \
+		$(CXXDEF)BUILD_TARGET_$(TARGET) $(CXXDEF)BUILD_HOST_$(HOST)
+
+ASFLAGS := $(ASFLAGS) $(CFLAGS)
+LDFLAGS := $(LDFLAGS) $(OPTLDFLAGS)
+
+###############################################################################
+# lib-shared defaults
+###############################################################################
+
+# Default library extension
+ifeq ($(COMPONENT_TYPE),lib-static)
+  LIBEXT ?= .a
+else
+  LIBEXT ?= .so
+endif
+
+# If we're building a shared library, modify the flags appropriately
+ifeq ($(COMPONENT_TYPE),lib-shared)
+  # Default CFLAGS/LDFLAGS for shared libraries
+  SHAREDCFLAGS ?= $(CCSHR) $(CCDEF)PIC
+  SHAREDCXXFLAGS ?= $(CXXSHR) $(CCDEF)PIC
+  SHAREDLDFLAGS ?= $(LDSHR)
+  SHAREDLDPATH ?= LD_LIBRARY_PATH="$(BUILDDIR):$(LD_LIBRARY_PATH)"
 endif
 
