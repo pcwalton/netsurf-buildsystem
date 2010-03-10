@@ -287,29 +287,27 @@ endif
 # Auto-detect the toolchain
 ###############################################################################
 
+# Check for GCC first, as that's most likely
 # TODO: Using shell redirection like this probably hurts portability
-ccvsn := $(shell $(CC) --version 2>&1)
-ifeq ($(ccvsn),)
-  # Version string is blank
-  ifeq ($(HOST),riscos)
-    # For some reason we never see the output of SCL apps, so assume Norcroft.
-    ccvsn := Norcroft
-  endif
-endif
-
-# "<binary name> (GCC) x.y.z (foo bar baz)"
-ifeq ($(word 2,$(ccvsn)),(GCC))
+ccspecs := $(shell $(CC) -dumpspecs 2>&1)
+ifeq ($(findstring libgcc,$(ccspecs)),libgcc)
+  # Looks like GCC
   toolchain := gcc
 else
-  # Older versions of GCC just output the version number, so examine the 
-  # binary name in the hope of detecting more GCC.
-  ifeq ($(findstring gcc,$(CC)),gcc)
-    toolchain := gcc
+  # Not GCC, so enquire further
+  ccvsn := $(shell $(CC) --version 2>&1)
+  ifeq ($(ccvsn),)
+    # Version string is blank
+    ifeq ($(HOST),riscos)
+      # For some reason we never see the output of SCL apps, so assume Norcroft.
+      ccvsn := Norcroft
+    endif
   endif
-endif
-# "Norcroft ..."
-ifeq ($(word 1,$(ccvsn)),Norcroft)
-  toolchain := norcroft
+
+  # "Norcroft ..."
+  ifeq ($(word 1,$(ccvsn)),Norcroft)
+    toolchain := norcroft
+  endif
 endif
 
 ifeq ($(toolchain),)

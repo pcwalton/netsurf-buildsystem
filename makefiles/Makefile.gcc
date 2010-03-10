@@ -62,20 +62,14 @@ endif
 ###############################################################################
 
 # Determine if the compiler supports simultaneous build & dep.
-ccvsn := $(shell $(CC) --version)
-# "<binary name> (GCC) x.y.z (foo bar baz)"
-ifeq ($(word 2,$(ccvsn)),(GCC))
-  # If the major version (x, above) is not 2, then assume build & dep.
-  # This will break if using a version of GCC < 2, but that's unlikely.
-  GCCVER := $(word 1,$(subst ., ,$(word 3, $(ccvsn))))
-  ifneq ($(GCCVER),2)
-    CC_CAN_BUILD_AND_DEP ?= yes
-  endif
-else
-  # Older versions of GCC just output the version number
-  GCCVER := $(word 1,$(subst ., ,$(ccvsn)))
-  ifneq ($(GCCVER),2)
-    CC_CAN_BUILD_AND_DEP ?= yes
-  endif
+ccvsn := $(shell $(CC) -dumpversion)
+# ccvsn = x.y.z
+GCCVER := $(word 1,$(subst ., ,$(ccvsn)))
+# GCCVER = x
+
+# If the major version (x, above) is not 2, then assume build & dep.
+# This will break if using a version of GCC < 2, but that's unlikely.
+ifneq ($(GCCVER),2)
+  CC_CAN_BUILD_AND_DEP ?= yes
 endif
 
