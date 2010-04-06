@@ -312,6 +312,10 @@ else
   ifeq ($(word 1,$(ccvsn)),Norcroft)
     toolchain := norcroft
   endif
+  # "GCC ..."
+  ifeq ($(word 1,$(ccvsn)),GCC)
+    toolchain := gcc
+  endif
 endif
 
 ifeq ($(toolchain),)
