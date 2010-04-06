@@ -299,8 +299,12 @@ else
   ifeq ($(ccvsn),)
     # Version string is blank
     ifeq ($(HOST),riscos)
-      # For some reason we never see the output of SCL apps, so assume Norcroft.
-      ccvsn := Norcroft
+      # For some reason we never see the output of SCL apps, so might be
+      # Norcroft.  However it might also be a GCC linked against a buggy
+      # UnixLib.
+      # TODO: Something more useful than blindly assuming GCC.
+      ccvsn := GCC
+      # ccvsn := Norcroft
     endif
   endif
 
