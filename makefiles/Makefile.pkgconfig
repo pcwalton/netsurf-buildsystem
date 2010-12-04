@@ -67,3 +67,22 @@ define pkg_config_package_compare_version
 
 endef
 
+# Add package to compiler/linker flags
+# 1: Name of package to add details of
+# 2: CFLAGS variable to extend, or none
+# 3: LDFLAGS variable to extend, or none
+define pkg_config_package_add_flags
+  ifeq ($$(PKGCONFIG),)
+    $$(error pkg-config is required to auto-detect package version)
+  endif
+
+  ifneq ($(2),)
+    $$($(2)) := $$($(2)) $$(shell $$(PKGCONFIG) --cflags $(1))
+  endif
+
+  ifneq ($(3),)
+    $$($(3)) := $$($(3)) $$(shell $$(PKGCONFIG) --libs $(1))
+  endif
+
+endef
+
