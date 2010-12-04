@@ -77,11 +77,11 @@ define pkg_config_package_add_flags
   endif
 
   ifneq ($(2),)
-    $$($(2)) := $$($(2)) $$(shell $$(PKGCONFIG) --cflags $(1))
+    $(2) := $$($(2)) $$(shell $$(PKGCONFIG) --cflags $(1))
   endif
 
   ifneq ($(3),)
-    $$($(3)) := $$($(3)) $$(shell $$(PKGCONFIG) --libs $(1))
+    $(3) := $$($(3)) $$(shell $$(PKGCONFIG) --libs $(1))
   endif
 
 endef
