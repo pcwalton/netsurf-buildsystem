@@ -139,6 +139,8 @@ DISTCLEAN_ITEMS :=
 TEST_ITEMS :=
 # List of targets to run for testing
 TEST_TARGETS :=
+# List of targets which are prerequisites for running tests
+TEST_PREREQS :=
 
 # List of items to (un)install
 INSTALL_ITEMS :=
@@ -216,7 +218,7 @@ endif
 all: $(PRE_TARGETS) $(OUTPUT) $(POST_TARGETS)
 
 # Build and execute testsuite 
-test: all $(TEST_BINARIES) $(TEST_TARGETS)
+test: all $(TEST_PREREQS) $(TEST_BINARIES) $(TEST_TARGETS)
 	$(VQ)$(ECHO) $(ECHOFLAGS) "    TEST: Testing complete"
 
 # Compute coverage
@@ -557,7 +559,7 @@ ifeq ($(WANT_TEST),yes)
     TESTLDFLAGS += -L$(BUILDDIR)/ -l$(COMPONENT)
   endif
 
-  TESTCFLAGS += $(CFLAGS)
+  TESTCFLAGS := $(CFLAGS) $(TESTCFLAGS)
   TESTCXXFLAGS += $(CXXFLAGS)
   TESTLDFLAGS += $(LDFLAGS)
 
