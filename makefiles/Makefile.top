@@ -266,8 +266,7 @@ distclean: clean
 __comma := ,
 __empty := 
 __space := $(empty) $(empty)
-__required = $(if $(REQUIRED_PKGS), \
-	Requires: $(subst $(__space),$(__comma) ,$(strip $(REQUIRED_PKGS))), )
+__required = $(if $(REQUIRED_PKGS),Requires: $(subst $(__space),$(__comma) ,$(strip $(REQUIRED_PKGS))),)
 
 # Install a pkg-config control file ($1) to the specified location ($2)
 define install_pkgconfig
