@@ -372,3 +372,8 @@ ifeq ($(COMPONENT_TYPE),lib-shared)
   SHAREDLDPATH ?= LD_LIBRARY_PATH="$(BUILDDIR):$(LD_LIBRARY_PATH)"
 endif
 
+################################################################################
+# Package config macros
+################################################################################
+
+include build/makefiles/Makefile.pkgconfig
