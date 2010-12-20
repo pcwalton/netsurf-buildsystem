@@ -316,6 +316,10 @@ else
   ifeq ($(word 1,$(ccvsn)),GCC)
     toolchain := gcc
   endif
+  # "clang ..."
+  ifeq ($(word 1,$(ccvsn)),clang)
+    toolchain := clang
+  endif
 endif
 
 ifeq ($(toolchain),)
