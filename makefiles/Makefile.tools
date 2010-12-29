@@ -56,6 +56,10 @@ else
   ifeq ($(HOST),Haiku)
     HOST := haiku
   endif
+
+  ifeq ($(HOST),AmigaOS)
+    HOST := amiga
+  endif
 endif
 
 ifeq ($(TARGET),)
@@ -197,6 +201,33 @@ ifeq ($(TARGET),windows)
 
   # Default prefix
   PREFIX ?= $(MINGW_INSTALL_ENV)
+endif
+
+# AmigaOS (3/4; m68k/ppc: we can treat them identically)
+ifeq ($(TARGET),amiga)
+  ifeq ($(HOST),amiga)
+    # Building on AmigaOS
+    # Nothing to do, as we assume the default tooling works
+  else
+    # Cross compiling for AmigaOS
+
+    # TODO: more sensible default
+    GCCSDK_INSTALL_ENV ?= /home/jmb/netsurf/env/m68k-amigaos/env
+    GCCSDK_INSTALL_CROSSBIN ?= /home/jmb/netsurf/env/m68k-amigaos/cross/bin
+
+    AR__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*ar)
+    CC__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
+    CXX__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*g++)
+
+    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(GCCSDK_INSTALL_ENV)/lib/pkgconfig" pkg-config
+
+    # TODO: this assumes GCC
+    CFLAGS := $(CFLAGS) -I$(GCCSDK_INSTALL_ENV)/include
+    CXXFLAGS := $(CXXFLAGS) -I$(GCCSDK_INSTALL_ENV)/include
+    LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
+
+    PREFIX ?= $(GCCSDK_INSTALL_ENV)
+  endif
 endif
 
 ###############################################################################
