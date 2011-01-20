@@ -363,6 +363,7 @@ $(BUILDDIR)/stamp:
 $(OUTPUT): $(BUILDDIR)/stamp $(OBJECTS)
 ifeq ($(COMPONENT_TYPE),lib-static)
 	$(VQ)$(ECHO) $(ECHOFLAGS) "      AR: $@"
+	$(Q)$(RM) $(RMFLAGS) $@
 	$(Q)$(AR) $(ARFLAGS) $@ $(OBJECTS)
 else
 	$(VQ)$(ECHO) $(ECHOFLAGS) "    LINK: $@"
