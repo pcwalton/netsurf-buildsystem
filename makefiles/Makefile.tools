@@ -372,6 +372,12 @@ else
   ifeq ($(word 1,$(ccvsn)),clang)
     toolchain := clang
   endif
+  ifeq ($(word 1,$(ccvsn)),Apple)
+    ifeq ($(word 2,$(ccvsn)),clang)
+      # Apple clang
+      toolchain := clang
+    endif
+  endif
 endif
 
 ifeq ($(toolchain),)

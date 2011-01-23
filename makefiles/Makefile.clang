@@ -26,6 +26,21 @@ LDSHR = -shared -Wl,-soname,$(SONAME)
 ARFLG := cru
 
 ###############################################################################
+# Mac OS X Universal Binaries
+###############################################################################
+
+ifeq ($(TARGET),Darwin)
+	ifneq ($(UNIVERSAL),)
+		UNIVERSAL_FLAGS := $(foreach arch,$(UNIVERSAL),-arch $(arch) )
+		
+		CFLAGS += $(UNIVERSAL_FLAGS)
+		LDFLAGS += $(UNIVERSAL_FLAGS)
+		CXXFLAGS += $(UNIVERSAL_FLAGS)
+		ARFLAGS += -s 
+	endif
+endif
+
+###############################################################################
 # Other settings
 ###############################################################################
 
