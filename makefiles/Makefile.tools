@@ -60,6 +60,10 @@ else
   ifeq ($(HOST),AmigaOS)
     HOST := amiga
   endif
+
+  ifeq ($(findstring MINGW,$(HOST)),MINGW)
+    HOST := windows
+  endif
 endif
 
 ifeq ($(TARGET),)
@@ -195,7 +199,12 @@ endif
 # Windows
 ifeq ($(TARGET),windows)
   ifeq ($(HOST),windows)
-    $(error Compiling on Windows is not supported)
+    # Building on Windows
+    CC__ := gcc
+    CXX__ := g++
+    AR__ := ar
+
+    PKGCONFIG ?=
   else
     # Cross compiling for Windows -- assumes mingw toolchain
     MINGW_INSTALL_ENV ?= /usr/local/mingw
