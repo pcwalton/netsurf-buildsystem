@@ -64,13 +64,13 @@ endif
 ifeq ($(TARGET),Darwin)
 	ifneq ($(UNIVERSAL),)
 		UNIVERSAL_FLAGS := $(foreach arch,$(UNIVERSAL),-arch $(arch) )
-        CC_CAN_BUILD_AND_DEP := no
+		CC_CAN_BUILD_AND_DEP := no
 		CC_CANNOT_DEP := yes
 		
-		CFLAGS += $(UNIVERSAL_FLAGS)
-		LDFLAGS += $(UNIVERSAL_FLAGS)
-		CXXFLAGS += $(UNIVERSAL_FLAGS)
-		ARFLAGS += -s 
+		CFLAGS := $(CFLAGS) $(UNIVERSAL_FLAGS)
+		LDFLAGS := $(LDFLAGS) $(UNIVERSAL_FLAGS)
+		CXXFLAGS := $(CXXFLAGS) $(UNIVERSAL_FLAGS)
+		ARFLAGS := $(ARFLAGS) -s 
 	endif
 endif
 
