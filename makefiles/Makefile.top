@@ -272,6 +272,7 @@ __required = $(if $(REQUIRED_PKGS),Requires: $(subst $(__space),$(__comma) ,$(st
 
 # Install a pkg-config control file ($1) to the specified location ($2)
 define install_pkgconfig
+	$(Q)$(ECHO) $(ECHOFLAGS) "sed -e... $1 >$(BUILDDIR)/$(1:.in=)"
 	$(Q)$(SED) \
 		-e 's#PREFIX#$(PREFIX)#' \
 		-e 's#MAJOR#$(major-version)#' \
