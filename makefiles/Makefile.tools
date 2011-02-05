@@ -96,6 +96,22 @@ ifeq ($(TARGET),riscos)
     GENHTML ?= echo
     LCOV ?= echo
     PKGCONFIG ?=
+    # On certain versions of RISC OS (<>4 || kernel < 8.75),
+    # the kernel will clean up the current redirection on
+    # OS_Exit, including closing the associated file handles.
+    # This is problematic for UnixLib, as it's invariably using
+    # those filehandles in a pipe between parent and child processes.
+    # This affects us as, anywhere where we shell out and want to
+    # capture the output of the child process may fail.
+    # Fortunately, if we know the child process is built against
+    # UnixLib, then we also know that it won't call OS_Exit when it
+    # exits, instead returning directly to our exit handler (and thus
+    # preserving the redirection). This only works, however, if the
+    # child application is specified using its absolute path, or 
+    # found in Run$Path. In the case of Perl, it does not appear in
+    # Run$Path, so we must invoke it using its absolute path so that
+    # the SharedUnixLibrary successfully detects it as a child process.
+    PERL ?= <Perl$$Dir>.bin.perl
 
     # This is nasty, but needed because $(CURDIR) will 
     # contain colons, and thus confuse make mightily
