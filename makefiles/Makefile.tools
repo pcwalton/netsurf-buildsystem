@@ -306,6 +306,8 @@ PERL ?= perl
 
 PKGCONFIG ?= pkg-config
 
+GREP ?= grep
+
 SED ?= sed
 
 TOUCH ?= touch
