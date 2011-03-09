@@ -242,15 +242,20 @@ ifeq ($(TARGET),windows)
 endif
 
 # AmigaOS (3/4; m68k/ppc: we can treat them identically)
-ifeq ($(TARGET),amiga)
-  ifeq ($(HOST),amiga)
+ifeq ($(findstring amiga,$(TARGET)),amiga)
+  ifeq ($(findstring amiga,$(HOST)),amiga)
     # Building on AmigaOS
     # Nothing to do, as we assume the default tooling works
   else
     # Cross compiling for AmigaOS
 
-    GCCSDK_INSTALL_ENV ?= /opt/netsurf/m68k-unknown-amigaos/env
-    GCCSDK_INSTALL_CROSSBIN ?= /opt/netsurf/m68k-unknown-amigaos/cross/bin
+    ifeq ($(TARGET),amigaos3)
+      GCCSDK_INSTALL_ENV ?= /opt/netsurf/m68k-unknown-amigaos/env
+      GCCSDK_INSTALL_CROSSBIN ?= /opt/netsurf/m68k-unknown-amigaos/cross/bin
+    else
+      GCCSDK_INSTALL_ENV ?= /opt/netsurf/ppc-amigaos/env
+      GCCSDK_INSTALL_CROSSBIN ?= /opt/netsurf/ppc-amigaos/cross/bin
+    endif
 
     AR__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*ar)
     CC__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
