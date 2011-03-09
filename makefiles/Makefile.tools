@@ -264,8 +264,8 @@ ifeq ($(findstring amiga,$(TARGET)),amiga)
     PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(GCCSDK_INSTALL_ENV)/lib/pkgconfig" pkg-config
 
     # TODO: this assumes GCC
-    CFLAGS := $(CFLAGS) -I$(GCCSDK_INSTALL_ENV)/include
-    CXXFLAGS := $(CXXFLAGS) -I$(GCCSDK_INSTALL_ENV)/include
+    CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
+    CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
     LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
 
     PREFIX ?= $(GCCSDK_INSTALL_ENV)
