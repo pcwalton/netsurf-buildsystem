@@ -23,8 +23,6 @@
 # 			Set to "yes" if it can.
 # DESTDIR		Sandboxed FS root (e.g. for packaging)
 # HOST			Host platform identifier
-# PREFIX		Absolute installation path prefix 
-# 				(defaults to /usr/local)
 # REQUIRED_PKGS		List of required pkg-config packages
 #
 # The client may also override all toolchain settings, including:
@@ -115,9 +113,6 @@ BUILDDIR ?= build-$(HOST)-$(TARGET)-$(BUILD)-$(COMPONENT_TYPE)
 # Build tree subdirs
 COVERAGEDIR := $(BUILDDIR)/coverage
 DOCDIR := $(BUILDDIR)/docs
-
-# Default prefix
-PREFIX ?= /usr/local
 
 # Determine if we want to build testcases
 ifeq ($(MAKECMDGOALS),test)

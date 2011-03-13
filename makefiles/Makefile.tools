@@ -17,6 +17,8 @@
 # OPTCXXFLAGS		Optional C++ compiler flags for $(BUILD)
 # OPTLDFLAGS		Optional linker flags for $(BUILD)
 # TARGET		Target platform (defaults to host)
+# PREFIX		Absolute installation path prefix 
+# 				(defaults to /usr/local)
 #
 
 ###############################################################################
@@ -142,7 +144,7 @@ ifeq ($(TARGET),riscos)
     CMHG ?= PATH="$(GCCSDK_INSTALL_CROSSBIN):$(PATH)" $(GCCSDK_INSTALL_CROSSBIN)/cmunge
     GENHTML ?= echo
     LCOV ?= echo
-    PKGCONFIG ?= $(GCCSDK_INSTALL_ENV)/ro-pkg-config
+    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/pkgconfig:$(GCCSDK_INSTALL_ENV)/lib/pkgconfig:$(GCCSDK_INSTALL_ENV)/share/pkgconfig" pkg-config
 
     ifneq ($(COMPONENT_TYPE),riscos-module)
       ifeq ($(origin CC),default)
@@ -200,7 +202,7 @@ ifeq ($(TARGET),beos)
       CXX__ := $(wildcard $(BEOS_INSTALL_CROSSBIN)/*g++)
       AR__ := $(wildcard $(BEOS_INSTALL_CROSSBIN)/*ar)
 
-      PKGCONFIG := PKG_CONFIG_LIBDIR="$(BEOS_INSTALL_ENV)/lib/pkgconfig:$(BEOS_INSTALL_ENV)/share/pkgconfig" pkg-config
+      PKGCONFIG := PKG_CONFIG_LIBDIR="$(PREFIX)/lib/pkgconfig:$(BEOS_INSTALL_ENV)/lib/pkgconfig:$(BEOS_INSTALL_ENV)/share/pkgconfig" pkg-config
     endif
   endif
 
@@ -229,7 +231,7 @@ ifeq ($(TARGET),windows)
     CXX__ := i586-mingw32msvc-g++
     AR__ := i586-mingw32msvc-ar
 
-    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(MINGW_INSTALL_ENV)/lib/pkgconfig" pkg-config
+    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/pkgconfig:$(MINGW_INSTALL_ENV)/lib/pkgconfig:$(MINGW_INSTALL_ENV)/share/pkgconfig" pkg-config
   endif
 
   # TODO: this assumes GCC
@@ -261,7 +263,7 @@ ifeq ($(findstring amiga,$(TARGET)),amiga)
     CC__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
     CXX__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*g++)
 
-    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(GCCSDK_INSTALL_ENV)/lib/pkgconfig" pkg-config
+    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/pkgconfig:$(MINGW_INSTALL_ENV)/lib/pkgconfig:$(MINGW_INSTALL_ENV)/share/pkgconfig" pkg-config
 
     # TODO: this assumes GCC
     CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
@@ -271,6 +273,9 @@ ifeq ($(findstring amiga,$(TARGET)),amiga)
     PREFIX ?= $(GCCSDK_INSTALL_ENV)
   endif
 endif
+
+# Default prefix
+PREFIX ?= /usr/local
 
 ###############################################################################
 # Tool defaults
@@ -309,7 +314,7 @@ MV ?= mv
 
 PERL ?= perl
 
-PKGCONFIG ?= pkg-config
+PKGCONFIG ?= PKG_CONFIG_PATH="$(PREFIX)/lib/pkgconfig" pkg-config
 
 GREP ?= grep
 
