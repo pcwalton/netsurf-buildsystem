@@ -314,7 +314,7 @@ MV ?= mv
 
 PERL ?= perl
 
-PKGCONFIG ?= PKG_CONFIG_PATH="$(PREFIX)/lib/pkgconfig" pkg-config
+PKGCONFIG ?= PKG_CONFIG_PATH="$(PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)" pkg-config
 
 GREP ?= grep
 
