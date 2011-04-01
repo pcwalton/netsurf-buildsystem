@@ -24,6 +24,9 @@ LDSHR = -shared -Wl,-soname,$(SONAME)
 
 ARFLG := cru
 
+# Definitions for various attributes
+CFLAGS := $(CFLAGS) -D_ALIGNED="__attribute__((aligned))"
+
 # Extensions for coverage target
 ifeq ($(MAKECMDGOALS),coverage)
   COVCFLAGS ?= -fprofile-arcs -ftest-coverage

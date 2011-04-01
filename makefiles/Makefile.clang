@@ -25,6 +25,9 @@ LDSHR = -shared -Wl,-soname,$(SONAME)
 
 ARFLG := cru
 
+# Definitions of various attributes
+CFLAGS := $(CFLAGS) -D_ALIGNED=""
+
 ###############################################################################
 # Mac OS X Universal Binaries
 ###############################################################################

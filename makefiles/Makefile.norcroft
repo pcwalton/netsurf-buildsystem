@@ -23,6 +23,9 @@ LDSHR :=
 
 ARFLG := -c
 
+# Definitions of various attributes
+CFLAGS := $(CFLAGS) -D_ALIGNED=""
+
 # Extensions for coverage target
 ifeq ($(MAKECMDGOALS),coverage)
   $(error Coverage is not supported with Norcroft)
