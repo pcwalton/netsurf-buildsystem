@@ -268,7 +268,7 @@ ifeq ($(findstring amiga,$(TARGET)),amiga)
     # TODO: this assumes GCC
     CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
     CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
-    LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
+    LDFLAGS := $(LDFLAGS) -N -L$(GCCSDK_INSTALL_ENV)/lib
 
     PREFIX ?= $(GCCSDK_INSTALL_ENV)
   endif
