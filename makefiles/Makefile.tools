@@ -272,9 +272,6 @@ ifeq ($(findstring amiga,$(TARGET)),amiga)
 
     PREFIX ?= $(GCCSDK_INSTALL_ENV)
   endif
-
-   # TODO: this assumes GCC
-   LDFLAGS := $(LDFLAGS) -N
 endif
 
 # Default prefix
