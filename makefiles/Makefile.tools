@@ -400,11 +400,10 @@ else
   ifeq ($(word 1,$(ccvsn)),clang)
     toolchain := clang
   endif
-  ifeq ($(word 1,$(ccvsn)),Apple)
-    ifeq ($(word 2,$(ccvsn)),clang)
-      # Apple clang
-      toolchain := clang
-    endif
+  ifeq ($(word 2,$(ccvsn)),clang)
+    # Some newer clangs have distributor as first word
+    # (ie, Debian, Apple, etc)
+    toolchain := clang
   endif
 endif
 
