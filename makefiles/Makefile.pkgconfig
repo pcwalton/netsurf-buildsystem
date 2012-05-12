@@ -24,7 +24,7 @@ define pkg_config_package_version
     $$(error pkg-config is required to auto-detect package version)
   endif
 
-  $(1) := $$(shell $$(PKGCONFIG) --version $(2))
+  $(1) := $$(shell $$(PKGCONFIG) --modversion $(2))
 
 endef
 
