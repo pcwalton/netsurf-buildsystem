@@ -86,3 +86,15 @@ define pkg_config_package_add_flags
 
 endef
 
+# Obtain the value of a pkg-config variable
+# 1: Name of variable to assign result into
+# 2: Name of package to search for
+# 3: Name of pkg-config variable to retrieve
+define pkg_config_get_variable
+  ifeq ($$(PKGCONFIG),)
+    $$(error pkg-config is required to auto-detect package version)
+  endif
+
+  $(1) := $$(shell $$(PKGCONFIG) --variable=$(3) $(2))
+
+endef
