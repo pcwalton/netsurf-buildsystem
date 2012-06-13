@@ -405,6 +405,9 @@ else
     # (ie, Debian, Apple, etc)
     toolchain := clang
   endif
+  ifeq ($(word 1,$(ccvsn)),Open64)
+    toolchain := open64
+  endif
 endif
 
 ifeq ($(toolchain),)
