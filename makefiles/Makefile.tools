@@ -35,10 +35,12 @@ ifeq ($(BUILD),)
 endif
 
 ###############################################################################
-# Determine path used to load us, so we can locate other makefiles
+# Determine path used to load us, so we can locate other makefiles etc
 ###############################################################################
 
 NSBUILD := $(dir $(lastword $(MAKEFILE_LIST)))
+NSSHARED := $(dir $(NSBUILD))
+NSTESTTOOLS := $(NSSHARED)/testtools
 
 ###############################################################################
 # Host/target platform detection

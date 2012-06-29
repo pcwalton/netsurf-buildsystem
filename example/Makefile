@@ -6,7 +6,9 @@ COMPONENT_TYPE := lib-static
 COMPONENT_VERSION := 0.0.1
 
 # Tooling
-include build/makefiles/Makefile.tools
+PREFIX ?= /opt/netsurf
+NSSHARED ?= $(PREFIX)/share/netsurf-buildsystem
+include $(NSSHARED)/makefiles/Makefile.tools
 
 # Grab the core makefile
 include $(NSBUILD)/Makefile.top
