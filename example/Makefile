@@ -9,7 +9,7 @@ COMPONENT_VERSION := 0.0.1
 include build/makefiles/Makefile.tools
 
 # Grab the core makefile
-include build/makefiles/Makefile.top
+include $(NSBUILD)/Makefile.top
 
 # Add extra install rules for our pkg-config control file and the library itself
 INSTALL_ITEMS := $(INSTALL_ITEMS) /lib/pkgconfig:lib$(COMPONENT).pc.in

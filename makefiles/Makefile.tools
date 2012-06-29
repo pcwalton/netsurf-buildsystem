@@ -35,6 +35,12 @@ ifeq ($(BUILD),)
 endif
 
 ###############################################################################
+# Determine path used to load us, so we can locate other makefiles
+###############################################################################
+
+NSBUILD := $(dir $(lastword $(MAKEFILE_LIST)))
+
+###############################################################################
 # Host/target platform detection
 ###############################################################################
 
@@ -415,7 +421,7 @@ ifeq ($(toolchain),)
 endif
 
 # TODO: It would be nice to avoid this hard-coded path
-include build/makefiles/Makefile.$(toolchain)
+include $(NSBUILD)/Makefile.$(toolchain)
 
 ###############################################################################
 # Default assembler/compiler/linker/archiver flags
@@ -468,4 +474,4 @@ endif
 # Package config macros
 ################################################################################
 
-include build/makefiles/Makefile.pkgconfig
+include $(NSBUILD)/Makefile.pkgconfig

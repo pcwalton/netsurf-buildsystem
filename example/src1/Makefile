@@ -4,4 +4,4 @@ DIR_SOURCES := foo.c
 DIR_INSTALL_ITEMS := /include:foo.h
 
 # Grab the core makefile
-include build/makefiles/Makefile.subdir
+include $(NSBUILD)/Makefile.subdir
