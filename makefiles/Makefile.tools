@@ -38,8 +38,8 @@ endif
 # Determine path used to load us, so we can locate other makefiles etc
 ###############################################################################
 
-NSBUILD := $(dir $(lastword $(MAKEFILE_LIST)))
-NSSHARED := $(dir $(NSBUILD))
+NSBUILD := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+NSSHARED := $(patsubst %/,%,$(dir $(NSBUILD)))
 NSTESTTOOLS := $(NSSHARED)/testtools
 
 ###############################################################################
