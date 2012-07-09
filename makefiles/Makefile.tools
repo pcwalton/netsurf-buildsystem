@@ -298,30 +298,26 @@ ifeq ($(TARGET),atari)
    
     GCCSDK_INSTALL_ENV ?= /opt/netsurf/m68k-atari-mint
     GCCSDK_INSTALL_CROSSBIN ?= /opt/netsurf/m68k-atari-mint/cross/bin
-
-    CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
-    CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include 
+    CC__ := $(GCCSDK_INSTALL_CROSSBIN)/m68k-atari-mint-gcc
+    CXX__ := $(GCCSDK_INSTALL_CROSSBIN)/m68k-atari-mint-g++
+    AR__ := $(GCCSDK_INSTALL_CROSSBIN)/m68k-atari-mint-ar
 
     ifeq ($(ATARIARCH),68000)
-       PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/pkgconfig:$(GCCSDK_INSTALL_ENV)/lib/pkgconfig:" pkg-config
-       LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
+       ARCHFLAGS := 
+       ARCHDIR :=
     endif
     ifeq ($(ATARIARCH),68020-60)
-       PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/m68020-60/pkgconfig:$(GCCSDK_INSTALL_ENV)/lib/m68020-60/pkgconfig:" pkg-config
-       CFLAGS := $(CFLAGS) -m68020-60
-       CXXFLAGS := $(CXXFLAGS) -m68020-60
-       LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib/m68020-60
+       ARCHFLAGS := -m$(ATARIARCH)
+       ARCHDIR := /$(ATARIARCH)
     endif
     ifeq ($(ATARIARCH),v4e)
-       PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/m5475/pkgconfig:$(GCCSDK_INSTALL_ENV)/lib/m5475/pkgconfig:" pkg-config
-       CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include -mcpu=5475
-       CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include -mcpu=5475
-       LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib/m5475 -mcpu=5475
+       ARCHFLAGS := -mcpu=5475
+       ARCHDIR := /m5475
     endif
 
-    CC__ := m68k-atari-mint-gcc
-    CXX__ := m68k-atari-mint-g++
-    AR__ := m68k-atari-mint-ar
+    CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include $(ARCHFLAGS)
+    CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include $(ARCHFLAGS)
+    LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib$(ARCHDIR)
 
     PREFIX ?= $(GCCSDK_INSTALL_ENV)
   endif
