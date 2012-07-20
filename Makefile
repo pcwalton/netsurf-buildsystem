@@ -3,7 +3,7 @@ all: usage
 usage:
 	@echo "make install PREFIX=/somewhere"
 	@echo ""
-	@echo "Will install the makefiles, and test tools into $PREFIX/share/netsurf-buildsystem"
+	@echo "Will install the makefiles, and test tools into \$$PREFIX/share/netsurf-buildsystem"
 	@echo ""
 	@echo "Which is where the libraries etc look for it."
 
