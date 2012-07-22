@@ -237,22 +237,42 @@ ifeq ($(TARGET),windows)
     PKGCONFIG ?=
   else
     # Cross compiling for Windows -- assumes mingw toolchain
-    MINGW_INSTALL_ENV ?= /usr/local/mingw
 
-    CC__ := i586-mingw32msvc-gcc
-    CXX__ := i586-mingw32msvc-g++
-    AR__ := i586-mingw32msvc-ar
+    ifeq ($(origin GCCSDK_INSTALL_ENV),undefined)
+      ifneq ($(realpath /opt/netsurf/i686-w64-mingw32/env),)
+        GCCSDK_INSTALL_ENV := /opt/netsurf/i686-w64-mingw32/env
+      else
+        GCCSDK_INSTALL_ENV := /usr/local/mingw
+      endif
+    endif
 
-    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/pkgconfig:$(MINGW_INSTALL_ENV)/lib/pkgconfig:$(MINGW_INSTALL_ENV)/share/pkgconfig" pkg-config
+    ifeq ($(origin GCCSDK_INSTALL_CROSSBIN),undefined)
+      ifneq ($(realpath /opt/netsurf/i686-w64-mingw32/cross/bin),)
+        GCCSDK_INSTALL_CROSSBIN := /opt/netsurf/i686-w64-mingw32/cross/bin
+        AR__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*ar)
+        CC__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
+        CXX__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*g++)
+      else
+        GCCSDK_INSTALL_CROSSBIN := /usr/local/mingw/bin
+        CC__ := i586-mingw32msvc-gcc
+        CXX__ := i586-mingw32msvc-g++
+        AR__ := i586-mingw32msvc-ar
+      endif
+    endif
+
+    GENHTML ?= echo
+    LCOV ?= echo
+    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/pkgconfig:$(GCCSDK_INSTALL_ENV)/lib/pkgconfig:$(GCCSDK_INSTALL_ENV)/share/pkgconfig" pkg-config
+
   endif
 
   # TODO: this assumes GCC
-  CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(MINGW_INSTALL_ENV)/include
-  CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(MINGW_INSTALL_ENV)/include
-  LDFLAGS := $(LDFLAGS) -L$(MINGW_INSTALL_ENV)/lib
+  CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
+  CXXFLAGS := $(CXXFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
+  LDFLAGS := $(LDFLAGS) -L$(GCCSDK_INSTALL_ENV)/lib
 
   # Default prefix
-  PREFIX ?= $(MINGW_INSTALL_ENV)
+  PREFIX ?= $(GCCSDK_INSTALL_ENV)
 endif
 
 # AmigaOS (3/4; m68k/ppc: we can treat them identically)
