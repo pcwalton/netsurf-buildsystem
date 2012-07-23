@@ -295,7 +295,7 @@ ifeq ($(findstring amiga,$(TARGET)),amiga)
     CC__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*gcc)
     CXX__ := $(wildcard $(GCCSDK_INSTALL_CROSSBIN)/*g++)
 
-    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/pkgconfig:$(MINGW_INSTALL_ENV)/lib/pkgconfig:$(MINGW_INSTALL_ENV)/share/pkgconfig" pkg-config
+    PKGCONFIG ?= PKG_CONFIG_LIBDIR="$(PREFIX)/lib/pkgconfig:$(GCCSDK_INSTALL_ENV)/lib/pkgconfig:$(GCCSDK_INSTALL_ENV)/share/pkgconfig" pkg-config
 
     # TODO: this assumes GCC
     CFLAGS := $(CFLAGS) -U__STRICT_ANSI__ -I$(GCCSDK_INSTALL_ENV)/include
