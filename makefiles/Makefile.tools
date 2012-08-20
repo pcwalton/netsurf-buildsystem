@@ -315,7 +315,7 @@ ifeq ($(TARGET),atari)
     # Cross compiling for FreeMiNT
 
     ATARIARCH ?= 68020-60
-   
+
     GCCSDK_INSTALL_ENV ?= /opt/netsurf/m68k-atari-mint/env
     GCCSDK_INSTALL_CROSSBIN ?= /opt/netsurf/m68k-atari-mint/cross/bin
     CC__ := $(GCCSDK_INSTALL_CROSSBIN)/m68k-atari-mint-gcc
@@ -397,6 +397,11 @@ XSLTPROC ?= xsltproc
 # Override defaulted tools
 ###############################################################################
 
+# CCACHE
+ifeq ($(origin CCACHE),undefined)
+  CCACHE=$(shell ccache -V >/dev/null 2>&1 && echo ccache || echo)
+endif
+
 # CC
 ifeq ($(findstring ccc-analyzer,$(CC)),ccc-analyzer)
     # We're being invoked by scan-build, so export 
@@ -413,7 +418,9 @@ else
   # Otherwise, leave it to be defaulted.
   ifeq ($(origin CC),default)
     ifdef CC__
-      CC := $(CC__)
+      CC := $(CCACHE) $(CC__)
+    else
+      CC := $(CCACHE) $(CC)
     endif
   endif
 endif
@@ -421,7 +428,9 @@ endif
 # CXX
 ifeq ($(origin CXX),default)
   ifdef CXX__
-    CXX := $(CXX__)
+    CXX := $(CCACHE) $(CXX__)
+  else
+    CXX := $(CCACHE) $(CXX)
   endif
 endif
 
